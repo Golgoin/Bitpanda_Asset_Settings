@@ -42,25 +42,26 @@ function processAssetData(settings, currencies) {
     console.log('Processed currencies:', allCurrencies);
 
     allCurrencies.forEach(currency => {
-        console.log('Processing currency:', {
-            id: currency.id,
-            pid: currency.attributes.pid,
-            name: currency.attributes.name,
-            type: currency.attributes.asset_type_name,
-            group: currency.attributes.asset_group_name
-        });
-        currencyMap.set(currency.attributes.pid || currency.id, {
-            name: currency.attributes.name,
-            symbol: currency.attributes.symbol,
-            asset_type_name: currency.attributes.asset_type_name,
-            asset_group_name: currency.attributes.asset_group_name
-        });
+        if (currency.attributes.pid) {  // Only map currencies that have a PID
+            console.log('Processing currency:', {
+                pid: currency.attributes.pid,
+                name: currency.attributes.name,
+                type: currency.attributes.asset_type_name,
+                group: currency.attributes.asset_group_name
+            });
+            currencyMap.set(currency.attributes.pid, {
+                name: currency.attributes.name,
+                symbol: currency.attributes.symbol,
+                asset_type_name: currency.attributes.asset_type_name,
+                asset_group_name: currency.attributes.asset_group_name
+            });
+        }
     });
 
     // Process settings and combine with currency data
     settings.data.forEach(setting => {
-        if (setting.type === "asset_settings" && setting.attributes) {
-            const lookupId = setting.attributes.pid || setting.id;
+        if (setting.type === "asset_settings" && setting.attributes && setting.attributes.pid) {
+            const lookupId = setting.attributes.pid;
             console.log('Looking up setting:', {
                 id: setting.id,
                 pid: setting.attributes.pid,
