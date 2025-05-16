@@ -27,8 +27,9 @@ async function fetchAssetData() {
         const container = document.getElementById('assetGroups');
         container.innerHTML = '';
         
-        // First render the updates table
-        renderUpdatesTable(updates, container);
+        // Render the updates table in its dedicated container
+        const updatesContainer = document.getElementById('updatesContainer');
+        renderUpdatesTable(updates, updatesContainer);
         // Then render the asset groups
         renderAssetGroups(combinedAssets);
     } catch (error) {
@@ -195,10 +196,10 @@ function renderAssetGroups(assets) {
 }
 
 function renderUpdatesTable(updates, container) {
-    const updatesSection = document.createElement('div');
-    updatesSection.className = 'updates-section';
-    updatesSection.innerHTML = `
-        <h2>Recent changes from status.bitpanda.com</h2>
+    const details = document.createElement('details');
+    details.className = 'updates-section';
+    details.innerHTML = `
+        <summary>Recent changes from status.bitpanda.com (${updates.length} updates)</summary>
         <div class="table-container">
             <table>
                 <tr>
@@ -218,7 +219,7 @@ function renderUpdatesTable(updates, container) {
             </table>
         </div>
     `;
-    container.appendChild(updatesSection);
+    container.appendChild(details);
 }
 
 function filterAssets() {
