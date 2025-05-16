@@ -25,4 +25,4 @@ A web application to display the asset settings of all assets available on the B
 
 ## Live Demo
 
-You can view the live version of this project at: [Your GitHub Pages URL will go here]
+You can view the live version of this project at: [https://golgoin.github.io/Bitpanda_Asset_Settings/](https://golgoin.github.io/Bitpanda_Asset_Settings/)
