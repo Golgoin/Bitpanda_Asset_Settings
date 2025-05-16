@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bitpanda Broker Asset Settings</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <script src="assets.js"></script>
+</head>
+<body>
+    <button class="theme-switch" id="theme-toggle" onclick="toggleTheme()">🌑</button>
+    <h1>Bitpanda Broker Asset Settings</h1>
+    <div class="controls-wrapper">
+        <div class="search-container">
+            <input type="text" id="assetSearch" class="search-box" placeholder="Search by asset name or symbol...">
+        </div>
+        <div class="filter-container">
+            <label class="filter-checkbox">
+                <input type="checkbox" id="maintenanceFilter"> In Maintenance
+            </label>
+            <label class="filter-checkbox">
+                <input type="checkbox" id="tradeOnlyFilter"> Trade Only
+            </label>
+            <label class="filter-checkbox">
+                <input type="checkbox" id="fullyIntegratedFilter"> Fully Integrated
+            </label>
+        </div>
+    </div>
+    <div id="noResults" class="no-results">No matching assets found</div>
+    <div id="assetGroups"></div>
+    <footer class="footer">
+        <p>Created by <a href="https://x.com/Golgoin" target="_blank">@Golgoin</a></p>
+    </footer>
+</body>
+</html>
