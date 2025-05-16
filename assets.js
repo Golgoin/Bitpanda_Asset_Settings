@@ -97,14 +97,6 @@ function groupAssets(assets) {
         // Normalize type names
         if (typeName === 'cryptocoin') {
             typeName = 'Crypto';
-        } else if (typeName === 'security') {
-            typeName = 'Security';
-        } else if (typeName === 'fiat') {
-            typeName = 'Fiat';
-        } else if (typeName === 'commodity') {
-            typeName = 'Commodity';
-        } else if (typeName === 'index') {
-            typeName = 'Index';
         } else {
             typeName = typeName.capitalize();
         }
