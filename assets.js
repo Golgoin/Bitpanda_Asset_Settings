@@ -154,6 +154,9 @@ function renderAssetGroups(assets) {
     Object.entries(grouped)
         .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
         .forEach(([_, group]) => {
+            // Sort assets by name within each group
+            group.assets.sort((a, b) => a.name.localeCompare(b.name));
+
             const details = document.createElement('details');
             details.innerHTML = `
                 <summary>${group.typeName} - ${group.groupName} (${group.assets.length} assets)</summary>
