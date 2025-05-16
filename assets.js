@@ -6,18 +6,56 @@ const STATUS_SYMBOLS = {
 
 async function fetchAssetData() {
     try {
-        const [settingsResponse, currenciesResponse, updatesResponse] = await Promise.all([
+        console.log('Starting API requests...');
+        
+        // Fetch asset settings and currencies data
+        const [settingsResponse, currenciesResponse] = await Promise.all([
             fetch('https://api.bitpanda.com/v1/assets/settings'),
-            fetch('https://api.bitpanda.com/v3/currencies'),
-            fetch('https://bitpanda.visionresources.info/updates')
+            fetch('https://api.bitpanda.com/v3/currencies')
         ]);
+        
+        console.log('API responses received:');
+        console.log('Settings response status:', settingsResponse.status);
+        console.log('Currencies response status:', currenciesResponse.status);
+        
+        // Check if responses are successful
+        if (!settingsResponse.ok || !currenciesResponse.ok) {
+            throw new Error(`API request failed: Settings (${settingsResponse.status}), Currencies (${currenciesResponse.status})`);
+        }
 
+        // Try to fetch updates from the API first, then fall back to local file if that fails
+        let updates = [];
+        try {
+            const updatesResponse = await fetch('https://bitpanda.visionresources.info/updates');
+            if (updatesResponse.ok) {
+                updates = await updatesResponse.json();
+                console.log('Updates loaded from API successfully');
+            } else {
+                throw new Error(`Updates API returned status: ${updatesResponse.status}`);
+            }
+        } catch (error) {
+            console.warn('Failed to load updates from API, trying local fallback:', error);
+            try {
+                const localUpdatesResponse = await fetch('updates.json');
+                if (localUpdatesResponse.ok) {
+                    updates = await localUpdatesResponse.json();
+                    console.log('Updates loaded from local file successfully');
+                } else {
+                    throw new Error(`Local updates file returned status: ${localUpdatesResponse.status}`);
+                }
+            } catch (localError) {
+                console.error('Failed to load updates from local file:', localError);
+                // updates remains an empty array
+            }
+        }
+
+        // Process responses
         const settings = await settingsResponse.json();
         const currencies = await currenciesResponse.json();
-        const updates = await updatesResponse.json();
-
-        console.log('Currencies data:', currencies.data.attributes);
-        console.log('Settings data:', settings.data);
+        
+        // Log full response structures for debugging
+        console.log('Full settings response structure:', JSON.stringify(settings).slice(0, 200) + '...');
+        console.log('Full currencies response structure:', JSON.stringify(currencies).slice(0, 200) + '...');
         console.log('Updates data:', updates);
 
         // Combine the data
@@ -27,10 +65,35 @@ async function fetchAssetData() {
         const container = document.getElementById('assetGroups');
         container.innerHTML = '';
         
-        // Render the updates table in its dedicated container
-        const updatesContainer = document.getElementById('updatesContainer');
-        renderUpdatesTable(updates, updatesContainer);
-        // Then render the asset groups
+        // Check if updates were successfully fetched
+        if (updates && updates.length > 0) {
+            // Render the updates table only if data was successfully retrieved
+            renderUpdatesTable(updates, container);
+        } else {            // Show a warning message about updates being unavailable
+            const warningSection = document.createElement('div');
+            warningSection.className = 'updates-section warning-section';
+            warningSection.innerHTML = `
+                <h2>Status Updates Unavailable</h2>
+                <p class="updates-subtitle">Updates could not be loaded at this time</p>
+                
+                <div class="warning-card">
+                    <div class="warning-icon">⚠️</div>
+                    <div class="warning-content">
+                        <p class="error">Unable to retrieve status updates.</p>
+                        <p>This may be due to:</p>
+                        <ul>
+                            <li>CORS restrictions when running locally (use <code>run_local.bat</code>)</li>
+                            <li>The updates service being temporarily unavailable</li>
+                            <li>Network connectivity issues</li>
+                        </ul>
+                        <p class="warning-note">You can still view all asset data below.</p>
+                    </div>
+                </div>
+            `;
+            container.appendChild(warningSection);
+        }
+        
+        // Always render the asset groups
         renderAssetGroups(combinedAssets);
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -42,32 +105,64 @@ function processAssetData(settings, currencies) {
     const assets = [];
     const currencyMap = new Map();
 
-    // Process currencies first to create a map using pid
-    console.log('Raw currency data:', currencies.data.attributes);
+    // Log data for debugging
+    console.log('Settings data structure check:', settings.data ? 'Has data property' : 'No data property');
+    console.log('Currencies data structure check:', currencies.data ? 'Has data property' : 'No data property');
     
-    // Get all possible currency types from the response
-    const allCurrencies = Object.values(currencies.data.attributes)
-        .filter(Array.isArray)
-        .flat();
+    if (!settings.data || !currencies.data) {
+        console.error('Invalid API response structure');
+        return [];
+    }
     
-    console.log('Processed currencies:', allCurrencies);
-
-    allCurrencies.forEach(currency => {
-        if (currency.attributes.pid) {  // Only map currencies that have a PID
-            console.log('Processing currency:', {
-                pid: currency.attributes.pid,
-                name: currency.attributes.name,
-                type: currency.attributes.asset_type_name,
-                group: currency.attributes.asset_group_name
-            });
-            currencyMap.set(currency.attributes.pid, {
-                name: currency.attributes.name,
-                symbol: currency.attributes.symbol,
-                asset_type_name: currency.attributes.asset_type_name,
-                asset_group_name: currency.attributes.asset_group_name
-            });
-        }
-    });
+    // Check the structure of the currencies object
+    if (currencies.data.attributes) {
+        console.log('Raw currency data:', currencies.data.attributes);
+        
+        // Get all possible currency types from the response
+        const allCurrencies = Object.values(currencies.data.attributes)
+            .filter(Array.isArray)
+            .flat();
+        
+        console.log('Processed currencies:', allCurrencies.length);
+        
+        // Process currencies
+        allCurrencies.forEach(currency => {
+            if (currency.attributes && currency.attributes.pid) {  // Only map currencies that have a PID
+                console.log('Processing currency:', {
+                    pid: currency.attributes.pid,
+                    name: currency.attributes.name,
+                    type: currency.attributes.asset_type_name,
+                    group: currency.attributes.asset_group_name
+                });
+                currencyMap.set(currency.attributes.pid, {
+                    name: currency.attributes.name,
+                    symbol: currency.attributes.symbol,
+                    asset_type_name: currency.attributes.asset_type_name,
+                    asset_group_name: currency.attributes.asset_group_name
+                });
+            }
+        });
+    } else if (currencies.data.length > 0) {
+        // Try alternate structure if the currency data has a different format
+        console.log('Using alternate currency data structure');
+        
+        currencies.data.forEach(currency => {
+            if (currency.attributes && currency.attributes.pid) {
+                console.log('Processing currency (alt):', {
+                    pid: currency.attributes.pid,
+                    name: currency.attributes.name
+                });
+                currencyMap.set(currency.attributes.pid, {
+                    name: currency.attributes.name,
+                    symbol: currency.attributes.symbol,
+                    asset_type_name: currency.attributes.asset_type_name || 'Unknown',
+                    asset_group_name: currency.attributes.asset_group_name || 'Unknown'
+                });
+            }
+        });
+    } else {
+        console.error('Could not determine currency data structure');
+    }
 
     // Process settings and combine with currency data
     settings.data.forEach(setting => {
@@ -160,34 +255,48 @@ function renderAssetGroups(assets) {
             group.assets.sort((a, b) => a.name.localeCompare(b.name));
 
             const details = document.createElement('details');
+            const assetCount = group.assets.length;
+            const badgeClass = assetCount > 10 ? 'badge-large' : 'badge-small';
+            
             details.innerHTML = `
-                <summary>${group.typeName} - ${group.groupName} (${group.assets.length} assets)</summary>
+                <summary>
+                    <span class="asset-count ${badgeClass}">${assetCount}</span>
+                    <div class="summary-content">
+                        <span class="group-type">${group.typeName}</span>
+                        <span class="group-separator">-</span>
+                        <span class="group-name">${group.groupName}</span>
+                    </div>
+                </summary>
                 <div class="table-container">
                     <table>
-                        <tr>
-                            <th>Name</th>
-                            <th>Symbol</th>
-                            <th>Available</th>
-                            <th>Buy</th>
-                            <th>Sell</th>
-                            <th>Maintenance</th>
-                            <th>Withdraw</th>
-                            <th>Deposit</th>
-                            <th>Limit Order</th>
-                        </tr>
-                        ${group.assets.map(asset => `
+                        <thead>
                             <tr>
-                                <td>${asset.name}</td>
-                                <td>${asset.symbol}</td>
-                                <td>${STATUS_SYMBOLS[asset.available]}</td>
-                                <td>${STATUS_SYMBOLS[asset.buy_active]}</td>
-                                <td>${STATUS_SYMBOLS[asset.sell_active]}</td>
-                                <td>${STATUS_SYMBOLS[asset.maintenance_enabled]}</td>
-                                <td>${STATUS_SYMBOLS[asset.withdraw_active]}</td>
-                                <td>${STATUS_SYMBOLS[asset.deposit_active]}</td>
-                                <td>${STATUS_SYMBOLS[asset.automated_order_active]}</td>
+                                <th>Name</th>
+                                <th>Symbol</th>
+                                <th>Available</th>
+                                <th>Buy</th>
+                                <th>Sell</th>
+                                <th>Maintenance</th>
+                                <th>Withdraw</th>
+                                <th>Deposit</th>
+                                <th>Limit Order</th>
                             </tr>
-                        `).join('')}
+                        </thead>
+                        <tbody>
+                            ${group.assets.map(asset => `
+                                <tr>
+                                    <td><strong>${asset.name}</strong></td>
+                                    <td>${asset.symbol}</td>
+                                    <td>${STATUS_SYMBOLS[asset.available]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.buy_active]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.sell_active]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.maintenance_enabled]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.withdraw_active]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.deposit_active]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.automated_order_active]}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
                     </table>
                 </div>
             `;
@@ -196,41 +305,68 @@ function renderAssetGroups(assets) {
 }
 
 function renderUpdatesTable(updates, container) {
-    const details = document.createElement('details');
-    details.className = 'updates-section';
-    details.innerHTML = `
-        <summary>Recent changes from status.bitpanda.com (${updates.length} updates)</summary>
+    const updatesSection = document.createElement('div');
+    updatesSection.className = 'updates-section';
+    updatesSection.innerHTML = `
+        <h2>Recent Changes</h2>
+        <p class="updates-subtitle">Status updates from Bitpanda platform</p>
         <div class="table-container">
             <table>
-                <tr>
-                    <th>Component</th>
-                    <th>New status</th>
-                    <th>Description</th>
-                    <th>Old status</th>
-                    <th>Changed At</th>
-                </tr>
-                ${updates.map(update => `
+                <thead>
                     <tr>
-                        <td>${update.component_name}</td>
-                        <td>${update.new_status}</td>
-                        <td>${update.description}</td>
-                        <td>${update.old_status}</td>
-                        <td>${new Date(update.changed_at).toLocaleString()}</td>
+                        <th>Component</th>
+                        <th>Status Change</th>
+                        <th>Description</th>
+                        <th>Changed At</th>
                     </tr>
-                `).join('')}
+                </thead>
+                <tbody>
+                    ${updates.map(update => {
+                        // Determine status class for styling
+                        let statusClass = 'status-neutral';
+                        if (update.new_status === 'operational') {
+                            statusClass = 'status-positive';
+                        } else if (['degraded_performance', 'partial_outage', 'major_outage'].includes(update.new_status)) {
+                            statusClass = 'status-negative';
+                        }
+                        
+                        // Format the date
+                        const date = new Date(update.changed_at);
+                        const formattedDate = date.toLocaleString(undefined, {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        return `
+                            <tr>
+                                <td><strong>${update.component_name}</strong></td>
+                                <td class="${statusClass}">
+                                    <span class="status-badge">${update.old_status}</span>
+                                    <span class="status-arrow">→</span>
+                                    <span class="status-badge">${update.new_status}</span>
+                                </td>
+                                <td>${update.description}</td>
+                                <td>${formattedDate}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
             </table>
         </div>
     `;
-    container.appendChild(details);
+    container.appendChild(updatesSection);
 }
 
 function filterAssets() {
     const searchInput = document.getElementById('assetSearch');
-    const searchTerm = (searchInput.value || '').toLowerCase().trim();
+    const searchTerm = searchInput.value.toLowerCase();
     const maintenanceFilter = document.getElementById('maintenanceFilter').checked;
     const tradeOnlyFilter = document.getElementById('tradeOnlyFilter').checked;
     const fullyIntegratedFilter = document.getElementById('fullyIntegratedFilter').checked;
-    const details = document.querySelectorAll('#assetGroups details');
+    const details = document.querySelectorAll('details');
     const noResults = document.getElementById('noResults');
     let totalVisible = 0;
 
@@ -239,11 +375,11 @@ function filterAssets() {
         let visibleRows = 0;
 
         rows.forEach(row => {
-            const name = (row.children[0].textContent || '').toLowerCase();
-            const symbol = (row.children[1].textContent || '').toLowerCase();
-            const maintenance = row.children[5].textContent.includes('✅');
-            const withdraw = row.children[6].textContent.includes('✅');
-            const deposit = row.children[7].textContent.includes('✅');
+            const name = row.children[0].textContent.toLowerCase();
+            const symbol = row.children[1].textContent.toLowerCase();
+            const maintenance = row.children[5].textContent === '✅';
+            const withdraw = row.children[6].textContent === '✅';
+            const deposit = row.children[7].textContent === '✅';
 
             const matchesSearch = name.includes(searchTerm) || symbol.includes(searchTerm);
             const matchesMaintenance = !maintenanceFilter || maintenance;
@@ -256,14 +392,41 @@ function filterAssets() {
         });
 
         const summary = detail.querySelector('summary');
-        const originalText = summary.getAttribute('data-original-text') || summary.textContent;
-        if (!summary.getAttribute('data-original-text')) {
-            summary.setAttribute('data-original-text', originalText);
+        
+        // Speichern der ursprünglichen Struktur beim ersten Durchlauf
+        if (!summary.hasAttribute('data-original-structure')) {
+            summary.setAttribute('data-original-structure', 'saved');
+            
+            // Speichern der Typ- und Gruppen-Information
+            const typeElement = summary.querySelector('.group-type');
+            const nameElement = summary.querySelector('.group-name');
+            
+            if (typeElement && nameElement) {
+                summary.setAttribute('data-type', typeElement.textContent);
+                summary.setAttribute('data-name', nameElement.textContent);
+            }
         }
 
         if (visibleRows > 0) {
             detail.style.display = '';
-            summary.textContent = `${originalText.split('(')[0]} (${visibleRows} assets)`;
+            
+            // HTML-Struktur beibehalten und nur die relevanten Teile aktualisieren
+            const assetCountElement = summary.querySelector('.asset-count');
+            const typeElement = summary.querySelector('.group-type');
+            const nameElement = summary.querySelector('.group-name');
+            
+            if (assetCountElement) {
+                // Asset-Zähler aktualisieren
+                assetCountElement.textContent = visibleRows;
+                
+                // Sicherstellen, dass die richtigen Klassen angewendet werden
+                if (visibleRows > 100) {
+                    assetCountElement.classList.add('badge-large');
+                } else {
+                    assetCountElement.classList.remove('badge-large');
+                }
+            }
+            
             totalVisible += visibleRows;
         } else {
             detail.style.display = 'none';
@@ -281,7 +444,8 @@ function toggleTheme() {
     localStorage.setItem('theme', newTheme);
 
     const button = document.getElementById('theme-toggle');
-    button.innerHTML = newTheme === 'dark' ? '☀' : '🌑';
+    const themeIcon = button.querySelector('.theme-icon');
+    themeIcon.innerHTML = newTheme === 'dark' ? '☀' : '🌑';
 }
 
 // Add String.prototype.capitalize() if not exists
@@ -299,7 +463,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.documentElement.setAttribute('data-theme', theme);
     const button = document.getElementById('theme-toggle');
-    button.innerHTML = theme === 'dark' ? '☀' : '🌑';
+    const themeIcon = button.querySelector('.theme-icon');
+    themeIcon.innerHTML = theme === 'dark' ? '☀' : '🌑';
 
     // Set up event listeners
     const searchInput = document.getElementById('assetSearch');

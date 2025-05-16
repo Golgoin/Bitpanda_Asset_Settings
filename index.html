@@ -1,35 +1,61 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>Bitpanda Broker Asset Settings</title>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="View all asset settings available on the Bitpanda Broker platform">
     <link rel="stylesheet" type="text/css" href="styles.css" />
     <script src="assets.js"></script>
 </head>
 <body>
-    <button class="theme-switch" id="theme-toggle" onclick="toggleTheme()">🌑</button>
-    <h1>Bitpanda Broker Asset Settings</h1>
-    <div id="updatesContainer"></div>
-    <div class="controls-wrapper">
-        <div class="search-container">
-            <input type="text" id="assetSearch" class="search-box" placeholder="Search by asset name or symbol...">
-        </div>
-        <div class="filter-container">
-            <label class="filter-checkbox">
-                <input type="checkbox" id="maintenanceFilter"> In Maintenance
-            </label>
-            <label class="filter-checkbox">
-                <input type="checkbox" id="tradeOnlyFilter"> Trade Only
-            </label>
-            <label class="filter-checkbox">
-                <input type="checkbox" id="fullyIntegratedFilter"> Fully Integrated
-            </label>
-        </div>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>Bitpanda - Asset Settings & Status Updates</h1>
+            <button class="theme-switch" id="theme-toggle" aria-label="Toggle dark mode" onclick="toggleTheme()">
+                <span class="theme-icon">🌑</span>
+            </button>
+        </header>
+        
+        <main class="main-content">
+            <section class="controls-section">
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <input 
+                            type="text" 
+                            id="assetSearch" 
+                            class="search-box" 
+                            placeholder="Search by asset name or symbol..." 
+                            autocomplete="off">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                </div>
+                <div class="filter-container">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="maintenanceFilter">
+                        <span class="custom-checkbox"></span>
+                        <span>In Maintenance</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="tradeOnlyFilter">
+                        <span class="custom-checkbox"></span>
+                        <span>Trade Only</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="fullyIntegratedFilter">
+                        <span class="custom-checkbox"></span>
+                        <span>Fully Integrated</span>
+                    </label>
+                </div>
+            </section>
+            
+            <div id="noResults" class="no-results">No matching assets found</div>
+            <section id="assetGroups" class="asset-groups"></section>
+        </main>
+        
+        <footer class="footer">
+            <p>Created by <a href="https://x.com/Golgoin" target="_blank">@Golgoin</a></p>
+        </footer>
     </div>
-    <div id="noResults" class="no-results">No matching assets found</div>
-    <div id="assetGroups"></div>
-    <footer class="footer">
-        <p>Created by <a href="https://x.com/Golgoin" target="_blank">@Golgoin</a></p>
-    </footer>
 </body>
 </html>
