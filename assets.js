@@ -9,7 +9,7 @@ async function fetchAssetData() {
         const [settingsResponse, currenciesResponse, updatesResponse] = await Promise.all([
             fetch('https://api.bitpanda.com/v1/assets/settings'),
             fetch('https://api.bitpanda.com/v3/currencies'),
-            fetch('https://cors-anywhere.herokuapp.com/https://bitpanda.visionresources.info/updates')
+            fetch('https://bitpanda.visionresources.info/updates')
         ]);
 
         const settings = await settingsResponse.json();
