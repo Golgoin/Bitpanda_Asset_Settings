@@ -34,12 +34,10 @@ function processAssetData(settings, currencies) {
     // Process currencies first to create a map using pid
     console.log('Raw currency data:', currencies.data.attributes);
     
-    const allCurrencies = [
-        ...(currencies.data.attributes.commodities || []),
-        ...(currencies.data.attributes.cryptocoins || []),
-        ...(currencies.data.attributes.securities || []),
-        ...(currencies.data.attributes.fiats || [])
-    ];
+    // Get all possible currency types from the response
+    const allCurrencies = Object.values(currencies.data.attributes)
+        .filter(Array.isArray)
+        .flat();
     
     console.log('Processed currencies:', allCurrencies);
 
@@ -94,7 +92,7 @@ function processAssetData(settings, currencies) {
 function groupAssets(assets) {
     const grouped = {};
     for (const asset of assets) {
-        let typeName = asset.asset_type_name.toLowerCase();
+        let typeName = (asset.asset_type_name || '').toLowerCase();
         // Normalize type names
         if (typeName === 'cryptocoin') {
             typeName = 'Crypto';
@@ -104,15 +102,17 @@ function groupAssets(assets) {
             typeName = 'Fiat';
         } else if (typeName === 'commodity') {
             typeName = 'Commodity';
+        } else if (typeName === 'index') {
+            typeName = 'Index';
         } else {
             typeName = typeName.capitalize();
         }
 
-        let groupName = asset.asset_group_name.toLowerCase();
+        let groupName = (asset.asset_group_name || '').toLowerCase();
         // Normalize group names
         if (['coin', 'token'].includes(groupName)) {
             groupName = 'Coin/Token';
-        } else if (groupName === 'fiat_earn') {
+        } else if (groupName === 'fiat_earn' || groupName === 'security_earn') {
             groupName = 'Cash Plus';
         } else if (groupName === 'leveraged_token') {
             groupName = 'Leverage';
@@ -126,6 +126,8 @@ function groupAssets(assets) {
             groupName = 'ETF';
         } else if (groupName === 'etc') {
             groupName = 'ETC';
+        } else if (groupName === 'index') {
+            groupName = 'Index';
         } else {
             groupName = groupName.split('_').map(word => word.capitalize()).join(' ');
         }
