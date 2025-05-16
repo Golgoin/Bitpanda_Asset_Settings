@@ -14,8 +14,12 @@ async function fetchAssetData() {
         const settings = await settingsResponse.json();
         const currencies = await currenciesResponse.json();
 
+        console.log('Currencies data:', currencies.data.attributes);
+        console.log('Settings data:', settings.data);
+
         // Combine the data
         const combinedAssets = processAssetData(settings, currencies);
+        console.log('Combined assets:', combinedAssets);
         renderAssetGroups(combinedAssets);
     } catch (error) {
         console.error('Error fetching asset data:', error);
@@ -32,7 +36,9 @@ function processAssetData(settings, currencies) {
         ...(currencies.data.attributes.commodities || []),
         ...(currencies.data.attributes.cryptocoins || []),
         ...(currencies.data.attributes.securities || []),
-        ...(currencies.data.attributes.fiats || [])
+        ...(currencies.data.attributes.fiats || []),
+        ...(currencies.data.attributes.etfs || []),
+        ...(currencies.data.attributes.stocks || [])
     ];
 
     allCurrencies.forEach(currency => {
@@ -72,20 +78,38 @@ function processAssetData(settings, currencies) {
 function groupAssets(assets) {
     const grouped = {};
     for (const asset of assets) {
-        let typeName = asset.asset_type_name.capitalize();
-        if (typeName === 'Cryptocoin') {
+        let typeName = asset.asset_type_name.toLowerCase();
+        // Normalize type names
+        if (typeName === 'cryptocoin') {
             typeName = 'Crypto';
+        } else if (typeName === 'security') {
+            typeName = 'Security';
+        } else if (typeName === 'fiat') {
+            typeName = 'Fiat';
+        } else if (typeName === 'commodity') {
+            typeName = 'Commodity';
+        } else {
+            typeName = typeName.capitalize();
         }
 
-        let groupName = asset.asset_group_name.capitalize();
-        if (['Coin', 'Token'].includes(groupName)) {
+        let groupName = asset.asset_group_name.toLowerCase();
+        // Normalize group names
+        if (['coin', 'token'].includes(groupName)) {
             groupName = 'Coin/Token';
-        } else if (groupName === 'Fiat_earn') {
+        } else if (groupName === 'fiat_earn') {
             groupName = 'Cash Plus';
-        } else if (groupName === 'Leveraged_token') {
+        } else if (groupName === 'leveraged_token') {
             groupName = 'Leverage';
-        } else if (groupName === 'Security_token') {
+        } else if (groupName === 'security_token') {
             groupName = 'Security';
+        } else if (groupName === 'metal') {
+            groupName = 'Metal';
+        } else if (groupName === 'stock') {
+            groupName = 'Stock';
+        } else if (groupName === 'etf') {
+            groupName = 'ETF';
+        } else {
+            groupName = groupName.split('_').map(word => word.capitalize()).join(' ');
         }
 
         const groupKey = `${typeName}-${groupName}`;
