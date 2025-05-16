@@ -1,10 +1,11 @@
 # Bitpanda Asset Settings
 
-A web application to display the asset settings of all assets available on the Bitpanda Broker (www.bitpanda.com).
+A web application to display the asset settings of all assets available on the Bitpanda Broker (www.bitpanda.com) and the recent changes by status.bitpanda.com
 
 ## Features
 
 - Get the settings of all assets available on Bitpanda Broker
+- Get recent changes published by status.bitpanda.com
 - Searchbox
 - Filters
 - Light/Dark theme toggle
