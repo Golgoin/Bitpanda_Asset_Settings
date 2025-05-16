@@ -32,16 +32,25 @@ function processAssetData(settings, currencies) {
     const currencyMap = new Map();
 
     // Process currencies first to create a map using pid
+    console.log('Raw currency data:', currencies.data.attributes);
+    
     const allCurrencies = [
         ...(currencies.data.attributes.commodities || []),
         ...(currencies.data.attributes.cryptocoins || []),
         ...(currencies.data.attributes.securities || []),
-        ...(currencies.data.attributes.fiats || []),
-        ...(currencies.data.attributes.etfs || []),
-        ...(currencies.data.attributes.stocks || [])
+        ...(currencies.data.attributes.fiats || [])
     ];
+    
+    console.log('Processed currencies:', allCurrencies);
 
     allCurrencies.forEach(currency => {
+        console.log('Processing currency:', {
+            id: currency.id,
+            pid: currency.attributes.pid,
+            name: currency.attributes.name,
+            type: currency.attributes.asset_type_name,
+            group: currency.attributes.asset_group_name
+        });
         currencyMap.set(currency.attributes.pid || currency.id, {
             name: currency.attributes.name,
             symbol: currency.attributes.symbol,
@@ -53,7 +62,14 @@ function processAssetData(settings, currencies) {
     // Process settings and combine with currency data
     settings.data.forEach(setting => {
         if (setting.type === "asset_settings" && setting.attributes) {
-            const currencyData = currencyMap.get(setting.attributes.pid || setting.id);
+            const lookupId = setting.attributes.pid || setting.id;
+            console.log('Looking up setting:', {
+                id: setting.id,
+                pid: setting.attributes.pid,
+                lookupId: lookupId,
+                found: currencyMap.has(lookupId)
+            });
+            const currencyData = currencyMap.get(lookupId);
             if (currencyData) {
                 assets.push({
                     name: currencyData.name,
@@ -108,6 +124,8 @@ function groupAssets(assets) {
             groupName = 'Stock';
         } else if (groupName === 'etf') {
             groupName = 'ETF';
+        } else if (groupName === 'etc') {
+            groupName = 'ETC';
         } else {
             groupName = groupName.split('_').map(word => word.capitalize()).join(' ');
         }
