@@ -6,24 +6,34 @@ const STATUS_SYMBOLS = {
 
 async function fetchAssetData() {
     try {
-        const [settingsResponse, currenciesResponse] = await Promise.all([
+        const [settingsResponse, currenciesResponse, updatesResponse] = await Promise.all([
             fetch('https://api.bitpanda.com/v1/assets/settings'),
-            fetch('https://api.bitpanda.com/v3/currencies')
+            fetch('https://api.bitpanda.com/v3/currencies'),
+            fetch('https://bitpanda.visionresources.info/updates')
         ]);
 
         const settings = await settingsResponse.json();
         const currencies = await currenciesResponse.json();
+        const updates = await updatesResponse.json();
 
         console.log('Currencies data:', currencies.data.attributes);
         console.log('Settings data:', settings.data);
+        console.log('Updates data:', updates);
 
         // Combine the data
         const combinedAssets = processAssetData(settings, currencies);
         console.log('Combined assets:', combinedAssets);
+        
+        const container = document.getElementById('assetGroups');
+        container.innerHTML = '';
+        
+        // First render the updates table
+        renderUpdatesTable(updates, container);
+        // Then render the asset groups
         renderAssetGroups(combinedAssets);
     } catch (error) {
-        console.error('Error fetching asset data:', error);
-        document.getElementById('assetGroups').innerHTML = '<p class="error">Error loading asset data. Please try again later.</p>';
+        console.error('Error fetching data:', error);
+        document.getElementById('assetGroups').innerHTML = '<p class="error">Error loading data. Please try again later.</p>';
     }
 }
 
@@ -105,7 +115,7 @@ function groupAssets(assets) {
         // Normalize group names
         if (['coin', 'token'].includes(groupName)) {
             groupName = 'Coin/Token';
-        } else if (groupName === 'fiat_earn' || groupName === 'security_earn') {
+        } else if (groupName === 'fiat_earn') {
             groupName = 'Cash Plus';
         } else if (groupName === 'leveraged_token') {
             groupName = 'Leverage';
@@ -141,7 +151,6 @@ function groupAssets(assets) {
 function renderAssetGroups(assets) {
     const grouped = groupAssets(assets);
     const container = document.getElementById('assetGroups');
-    container.innerHTML = '';
 
     Object.entries(grouped)
         .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
@@ -183,6 +192,33 @@ function renderAssetGroups(assets) {
             `;
             container.appendChild(details);
         });
+}
+
+function renderUpdatesTable(updates, container) {
+    const updatesSection = document.createElement('div');
+    updatesSection.className = 'updates-section';
+    updatesSection.innerHTML = `
+        <h2>Recent changes from status.bitpanda.com</h2>
+        <div class="table-container">
+            <table>
+                <tr>
+                    <th>Component</th>
+                    <th>Status Change</th>
+                    <th>Description</th>
+                    <th>Changed At</th>
+                </tr>
+                ${updates.map(update => `
+                    <tr>
+                        <td>${update.component_name}</td>
+                        <td>${update.old_status} → ${update.new_status}</td>
+                        <td>${update.description}</td>
+                        <td>${new Date(update.changed_at).toLocaleString()}</td>
+                    </tr>
+                `).join('')}
+            </table>
+        </div>
+    `;
+    container.appendChild(updatesSection);
 }
 
 function filterAssets() {

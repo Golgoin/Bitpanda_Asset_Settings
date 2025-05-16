@@ -174,3 +174,24 @@ details[open] summary {
 .footer a:hover {
     opacity: 0.7;
 }
+
+.updates-section {
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 1rem;
+    background-color: var(--details-bg);
+}
+
+.updates-section h2 {
+    margin: 0 0 1rem 0;
+    color: var(--text-color);
+}
+
+.updates-section td:nth-child(2) {
+    white-space: nowrap;
+}
+
+.updates-section td:nth-child(4) {
+    white-space: nowrap;
+}
