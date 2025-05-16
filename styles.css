@@ -140,7 +140,7 @@ a:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 0 2rem;
+    padding: 0.5rem 0 0.5rem;
     position: relative;
     margin-bottom: var(--section-spacing);
 }
@@ -317,6 +317,15 @@ a:hover {
         font-size: 1.3rem;
         margin-top: 40px;
     }
+}
+
+/* Updates Container */
+.updates-container {
+    margin-bottom: var(--section-spacing);
+}
+
+.updates-container .updates-section {
+    margin: 0;
 }
 
 /* Search & Filter Controls */
@@ -876,10 +885,18 @@ summary:hover::before {
 .updates-section {
     background-color: var(--bg-secondary);
     border-radius: 12px;
-    padding: 1.25rem;
     margin: 1.5rem 0;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    border-left: 4px solid var(--primary-color); /* Seitliche Hervorhebung */
+    border-left: 4px solid var(--primary-color);
+}
+
+.updates-section > summary {
+    padding: 1.25rem;
+}
+
+.updates-section .table-container {
+    padding: 0;
+    border-top: none;
 }
 
 .updates-section h2 {
@@ -925,7 +942,7 @@ summary:hover::before {
 
 /* Mobile optimizations for Recent Changes */
 @media (max-width: 768px) {
-    .updates-section {
+    .updates-section > summary {
         padding: 1rem;
     }
     
@@ -980,4 +997,37 @@ summary:hover::before {
 
 [data-theme="dark"] .updates-section {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile optimizations for Recent Changes - Overflow-Problem beheben */
+.updates-section {
+    overflow-x: auto; /* Erlaubt horizontales Scrollen falls nötig */
+    max-width: 100%; /* Begrenzt Breite auf Container */
+}
+
+/* Tabellenzellen besser für mobile Ansicht optimieren */
+@media (max-width: 576px) {
+    .updates-section table {
+        table-layout: fixed; /* Hilft bei der Breitenverteilung */
+        width: 100%;
+    }
+    
+    .updates-section th,
+    .updates-section td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.85rem;
+        white-space: normal; /* Text umbrechen erlauben */
+        word-wrap: break-word; /* Lange Worte umbrechen */
+    }
+    
+    /* Spaltenbreiten anpassen */
+    .updates-section th:first-child,
+    .updates-section td:first-child {
+        width: 33%; /* Datum-Spalte */
+    }
+    
+    .updates-section th:last-child,
+    .updates-section td:last-child {
+        width: 33%; /* Status-Spalte */
+    }
 }
