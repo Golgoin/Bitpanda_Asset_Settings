@@ -224,11 +224,11 @@ function renderUpdatesTable(updates, container) {
 
 function filterAssets() {
     const searchInput = document.getElementById('assetSearch');
-    const searchTerm = searchInput.value.toLowerCase();
+    const searchTerm = (searchInput.value || '').toLowerCase().trim();
     const maintenanceFilter = document.getElementById('maintenanceFilter').checked;
     const tradeOnlyFilter = document.getElementById('tradeOnlyFilter').checked;
     const fullyIntegratedFilter = document.getElementById('fullyIntegratedFilter').checked;
-    const details = document.querySelectorAll('details');
+    const details = document.querySelectorAll('#assetGroups details');
     const noResults = document.getElementById('noResults');
     let totalVisible = 0;
 
@@ -237,11 +237,11 @@ function filterAssets() {
         let visibleRows = 0;
 
         rows.forEach(row => {
-            const name = row.children[0].textContent.toLowerCase();
-            const symbol = row.children[1].textContent.toLowerCase();
-            const maintenance = row.children[5].textContent === '✅';
-            const withdraw = row.children[6].textContent === '✅';
-            const deposit = row.children[7].textContent === '✅';
+            const name = (row.children[0].textContent || '').toLowerCase();
+            const symbol = (row.children[1].textContent || '').toLowerCase();
+            const maintenance = row.children[5].textContent.includes('✅');
+            const withdraw = row.children[6].textContent.includes('✅');
+            const deposit = row.children[7].textContent.includes('✅');
 
             const matchesSearch = name.includes(searchTerm) || symbol.includes(searchTerm);
             const matchesMaintenance = !maintenanceFilter || maintenance;
