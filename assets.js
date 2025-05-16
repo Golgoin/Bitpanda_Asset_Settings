@@ -204,15 +204,17 @@ function renderUpdatesTable(updates, container) {
             <table>
                 <tr>
                     <th>Component</th>
-                    <th>Status Change</th>
+                    <th>New status</th>
                     <th>Description</th>
+                    <th>Old status</th>
                     <th>Changed At</th>
                 </tr>
                 ${updates.map(update => `
                     <tr>
                         <td>${update.component_name}</td>
-                        <td>${update.old_status} → ${update.new_status}</td>
+                        <td>${update.new_status}</td>
                         <td>${update.description}</td>
+                        <td>${update.old_status}</td>
                         <td>${new Date(update.changed_at).toLocaleString()}</td>
                     </tr>
                 `).join('')}
