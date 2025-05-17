@@ -348,14 +348,14 @@ function renderUpdatesTable(updates, container) {
 
                         return `
                             <tr class="toggle-description" style="cursor: pointer;">
-                                <td><strong>${update.component_name}</strong></td>
+                                <td><strong>${update.component_name}</strong></td>                                
                                 <td class="${statusClass}">
-                                    <span class="status-badge">${update.new_status}</span>
+                                    <span class="status-badge">${formatStatusText(update.new_status)}</span>
                                 </td>
                                 <td>${formattedDate}</td>
                             </tr>
                             <tr class="description-row" style="display: none; background-color: inherit;">
-                                <td colspan="4" style="text-align: left;">
+                                <td colspan="3" style="text-align: left;">
                                     <strong>Description:</strong> ${update.description}
                                 </td>
                             </tr>
@@ -462,6 +462,10 @@ if (!String.prototype.capitalize) {
     String.prototype.capitalize = function() {
         return this.charAt(0).toUpperCase() + this.slice(1);
     };
+}
+
+function formatStatusText(status) {
+    return status.replace(/_/g, ' ').capitalize();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
