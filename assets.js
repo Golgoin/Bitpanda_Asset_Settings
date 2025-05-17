@@ -315,7 +315,7 @@ function renderUpdatesTable(updates, container) {
                 <div class="summary-content">
                     <span class="group-type">Recent Changes</span>
                     <span class="group-separator">-</span>
-                    <span class="group-name">Component updates from status.bitpanda.com</span>
+                    <span class="group-name">status.bitpanda.com</span>
                 </div>
             </summary>
             <table>
@@ -323,8 +323,6 @@ function renderUpdatesTable(updates, container) {
                     <tr>
                         <th>Component</th>
                         <th>New Status</th>
-                        <th>Description</th>
-                        <th>Old Status</th>
                         <th>Changed At</th>
                     </tr>
                 </thead>
@@ -349,16 +347,17 @@ function renderUpdatesTable(updates, container) {
                         });
 
                         return `
-                            <tr>
+                            <tr class="toggle-description" style="cursor: pointer;">
                                 <td><strong>${update.component_name}</strong></td>
                                 <td class="${statusClass}">
                                     <span class="status-badge">${update.new_status}</span>
                                 </td>
-                                <td>${update.description}</td>
-                                <td class="${statusClass}">
-                                    <span class="status-badge">${update.old_status}</span>
-                                </td>
                                 <td>${formattedDate}</td>
+                            </tr>
+                            <tr class="description-row" style="display: none; background-color: inherit;">
+                                <td colspan="4" style="text-align: left;">
+                                    <strong>Description:</strong> ${update.description}
+                                </td>
                             </tr>
                         `;
                     }).join('')}
@@ -367,6 +366,22 @@ function renderUpdatesTable(updates, container) {
         </details>
     `;
     container.appendChild(updatesSection);
+
+    // Add event listeners for toggle buttons
+    const toggleRows = updatesSection.querySelectorAll('.toggle-description');
+    toggleRows.forEach(row => {
+        row.addEventListener('click', (event) => {
+            const descriptionRow = row.nextElementSibling;
+            if (descriptionRow && descriptionRow.classList.contains('description-row')) {
+                const isVisible = descriptionRow.style.display === '';
+                descriptionRow.style.display = isVisible ? 'none' : '';
+                const arrow = row.querySelector('.arrow');
+                if (arrow) {
+                    arrow.textContent = isVisible ? '+' : '-';
+                }
+            }
+        });
+    });
 }
 
 function filterAssets() {
@@ -375,55 +390,46 @@ function filterAssets() {
     const maintenanceFilter = document.getElementById('maintenanceFilter').checked;
     const tradeOnlyFilter = document.getElementById('tradeOnlyFilter').checked;
     const fullyIntegratedFilter = document.getElementById('fullyIntegratedFilter').checked;
-    const details = document.querySelectorAll('details');
+    // Specifically target details in the assetGroups container, excluding the updates section
+    const details = document.getElementById('assetGroups').querySelectorAll('details');
     const noResults = document.getElementById('noResults');
     let totalVisible = 0;
 
     details.forEach(detail => {
-        if (!detail.classList.contains('updates-section')) {  // Skip updates section
-            const rows = detail.querySelectorAll('tr:not(:first-child)');
-            let visibleRows = 0;
+        const tableBody = detail.querySelector('tbody');
+        if (!tableBody) return;
+        
+        const rows = tableBody.querySelectorAll('tr');
+        let visibleRows = 0;
 
-            rows.forEach(row => {
-                const name = row.querySelector('td:nth-child(1)').textContent.toLowerCase().trim();
-                const symbol = row.querySelector('td:nth-child(2)').textContent.toLowerCase().trim();
-                const maintenance = row.querySelector('td:nth-child(6)').textContent.includes('✅');
-                const withdraw = row.querySelector('td:nth-child(7)').textContent.includes('✅');
-                const deposit = row.querySelector('td:nth-child(8)').textContent.includes('✅');
+        rows.forEach(row => {
+            if (!row.querySelector('td')) return; // Skip header rows
+            
+            const cells = row.querySelectorAll('td');
+            const name = cells[0].textContent.toLowerCase();
+            const symbol = cells[1].textContent.toLowerCase();
+            const maintenance = cells[5].textContent === '✅';
+            const withdraw = cells[6].textContent === '✅';
+            const deposit = cells[7].textContent === '✅';
 
-                // Split search into words and filter out empty strings
-                const searchWords = searchTerm.split(/\s+/).filter(word => word.length > 0);
-                
-                // Split name and symbol into parts, considering spaces and special characters
-                const nameParts = name.split(/[\s\/\-_]+/).filter(part => part.length > 0);
-                const symbolParts = symbol.split(/[\s\/\-_]+/).filter(part => part.length > 0);
-                
-                // Function to check if a word exactly matches any part
-                const matchesExactly = (word, parts) => {
-                    return parts.some(part => {
-                        // Check for exact match or if the part starts with the word
-                        // This allows partial matches at the start of words but not in the middle
-                        return part === word || part.startsWith(word);
-                    });
-                };
+            const matchesSearch = name.includes(searchTerm) || symbol.includes(searchTerm);
+            const matchesMaintenance = !maintenanceFilter || maintenance;
+            const matchesTradeOnly = !tradeOnlyFilter || (!withdraw && !deposit);
+            const matchesFullyIntegrated = !fullyIntegratedFilter || (withdraw || deposit);
 
-                // Check if all search words match either name or symbol parts
-                const matchesSearch = searchTerm === '' || searchWords.every(word =>
-                    matchesExactly(word, nameParts) || matchesExactly(word, symbolParts)
-                );
+            const isVisible = matchesSearch && matchesMaintenance && matchesTradeOnly && matchesFullyIntegrated;
+            row.style.display = isVisible ? '' : 'none';
+            if (isVisible) visibleRows++;
+        });
 
-                const matchesMaintenance = !maintenanceFilter || maintenance;
-                const matchesTradeOnly = !tradeOnlyFilter || (!withdraw && !deposit);
-                const matchesFullyIntegrated = !fullyIntegratedFilter || (withdraw || deposit);
+        const summary = detail.querySelector('summary');
+        const originalText = summary.getAttribute('data-original-text') || summary.textContent;
+        if (!summary.getAttribute('data-original-text')) {
+            summary.setAttribute('data-original-text', originalText);
+        }
 
-                const isVisible = matchesSearch && matchesMaintenance && matchesTradeOnly && matchesFullyIntegrated;
-                row.style.display = isVisible ? '' : 'none';
-                if (isVisible) visibleRows++;
-            });
-
-            // Update visibility and count for the current detail element
-            if (visibleRows > 0) {
-                detail.style.display = '';
+        if (visibleRows > 0) {
+            detail.style.display = '';
                 const summary = detail.querySelector('summary');
                 const assetCountElement = summary.querySelector('.asset-count');
                 if (assetCountElement) {
@@ -431,15 +437,12 @@ function filterAssets() {
                     assetCountElement.className = 'asset-count ' + (visibleRows > 10 ? 'badge-large' : 'badge-small');
                 }
                 totalVisible += visibleRows;
-            } else {
-                detail.style.display = 'none';
-            }
+        } else {
+            detail.style.display = 'none';
         }
     });
 
-    if (noResults) {
-        noResults.style.display = totalVisible === 0 ? 'block' : 'none';
-    }
+    noResults.style.display = totalVisible === 0 ? 'block' : 'none';
 }
 
 function toggleTheme() {
