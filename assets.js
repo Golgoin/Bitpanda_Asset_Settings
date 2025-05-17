@@ -275,12 +275,11 @@ function renderAssetGroups(assets) {
                             <tr>
                                 <th>Name</th>
                                 <th>Symbol</th>
-                                <th>Available</th>
                                 <th>Buy</th>
                                 <th>Sell</th>
-                                <th>Maintenance</th>
-                                <th>Withdraw</th>
-                                <th>Deposit</th>
+                                <th>🚧</th>
+                                <th>⬆️</th>
+                                <th>⬇️</th>
                                 <th>Limit Order</th>
                             </tr>
                         </thead>
@@ -289,7 +288,6 @@ function renderAssetGroups(assets) {
                                 <tr>
                                     <td><strong>${asset.name}</strong></td>
                                     <td>${asset.symbol}</td>
-                                    <td>${STATUS_SYMBOLS[asset.available]}</td>
                                     <td>${STATUS_SYMBOLS[asset.buy_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.sell_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.maintenance_enabled]}</td>
@@ -340,7 +338,7 @@ function renderUpdatesTable(updates, container) {
                         const date = new Date(update.changed_at);
                         const formattedDate = date.toLocaleString(undefined, {
                             year: 'numeric',
-                            month: 'short',
+                            month: 'numeric',
                             day: 'numeric',
                             hour: '2-digit',
                             minute: '2-digit'

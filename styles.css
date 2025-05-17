@@ -90,62 +90,6 @@ html {
     scroll-behavior: smooth;
 }
 
-/* Mobile Typography Adjustments */
-@media (max-width: 767px) {
-    html {
-        font-size: 14px; /* Reduce base font size for mobile */
-    }
-
-    h1 {
-        font-size: 1.3rem;
-    }
-
-    h2 {
-        font-size: 1.2rem;
-    }
-
-    .search-box {
-        font-size: 14px;
-    }
-
-    .group-type,
-    .group-name {
-        font-size: 0.9rem;
-    }
-
-    .asset-count {
-        font-size: 13px;
-    }
-}
-
-/* Even smaller screens */
-@media (max-width: 375px) {
-    html {
-        font-size: 13px; /* Further reduce base font size for very small screens */
-    }
-
-    h1 {
-        font-size: 1.2rem;
-    }
-
-    h2 {
-        font-size: 1.1rem;
-    }
-
-    .search-box {
-        font-size: 13px;
-    }
-
-    .group-type,
-    .group-name {
-        font-size: 0.85rem;
-    }
-
-    .asset-count {
-        font-size: 12px;
-    }
-}
-
 body {
     font-family: var(--font-family-base);
     line-height: var(--line-height-base);
@@ -205,39 +149,6 @@ a:hover {
     margin-bottom: var(--section-spacing);
 }
 
-/* Theme Toggle */
-/* ENTFERNEN: Diese alten Theme-Switch Styles vollständig löschen */
-/* 
-.theme-switch {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    background-color: var(--bg-secondary);
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: var(--transition-base);
-    box-shadow: var(--box-shadow);
-}
-
-.theme-icon {
-    font-size: 24px;
-}
-
-.theme-switch:hover {
-    transform: rotate(15deg);
-    box-shadow: var(--box-shadow-hover);
-}
-
-.theme-switch:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(0, 194, 182, 0.3);
-}
-*/
-
-/* BEHALTEN: Der neue minimalistische Theme-Toggle-Button */
 #theme-toggle {
     position: relative;
     width: 40px;
@@ -336,42 +247,6 @@ a:hover {
     z-index: 100;
 }
 
-/* Mobiles Layout anpassen - Header nach unten verschieben */
-@media (max-width: 767px) {
-    h1 {
-        font-size: 1.5rem; /* Kleinere Schrift auf Mobilgeräten */
-        padding-right: 0; /* Kein rechtes Padding mehr nötig */
-        text-align: center; /* Für bessere mobile Darstellung */
-    }
-
-    .app-header {
-        padding-top: 10px;
-        padding-bottom: 8px;
-        gap: 0.5rem; /* Abstand zwischen Elementen verringern */
-    }
-
-    .controls-section {
-        padding-top: 0.5rem; /* Abstand nach oben verringern */
-    }
-    
-    /* Verbesserter Button für Mobilgeräte */
-    .theme-toggle-container {
-        right: 12px;
-        top: 12px;
-    }
-    
-    #theme-toggle {
-        width: 36px;
-        height: 36px;
-    }
-}
-
-/* Extrem kleine Bildschirme */
-@media (max-width: 360px) {
-    h1 {
-        font-size: 1.3rem;
-    }
-}
 
 /* Updates Container */
 .updates-container {
@@ -517,16 +392,16 @@ summary {
     cursor: pointer;
     font-weight: var(--font-weight-normal);
     font-size: var(--font-size-base);
-    display: flex; /* Flex statt Grid für bessere vertikale Zentrierung */
-    align-items: center; /* Vertikale Zentrierung */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     background-color: var(--bg-secondary);
     color: var(--text-primary);
     transition: all 0.2s ease;
     position: relative;
     border: none;
     min-height: 56px;
-    justify-content: space-between; /* Verteilt Elemente optimal */
-    gap: 10px; /* Minimaler Abstand zwischen den Elementen */
+    gap: 10px;
 }
 
 summary::-webkit-details-marker {
@@ -541,8 +416,8 @@ summary::after {
     border-bottom: 2px solid var(--text-muted);
     transform: rotate(45deg);
     transition: all 0.2s ease;
-    flex-shrink: 0; /* Verhindert Schrumpfen */
-    margin-left: 10px; /* Abstand zum Content */
+    flex-shrink: 0;
+    margin-left: 10px;
 }
 
 details[open] summary::after {
@@ -618,10 +493,10 @@ details[open] summary::after {
     align-items: center;
 }
 
-/* Better table styling for asset details - volle Breite mit Padding */
+/* Better table styling for asset details */
 .table-container {
     border-top: 1px solid rgba(0,0,0,0.06);
-    padding: 0 12px;
+    padding: 0;
     overflow-x: auto;
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
@@ -635,8 +510,24 @@ table {
 }
 
 th, td {
-    padding: 1em 1em 1em; /* Konsistentes Padding für alle Zellen */
+    padding: 0.5em 0.5em 0.5em; /* Konsistentes Padding für alle Zellen */
     text-align: left;
+}
+
+/* Center status symbols in the asset tables */
+.asset-groups th:nth-child(n+3), 
+.asset-groups td:nth-child(n+3) {
+    text-align: center;
+    width: 50px;
+}
+
+/* Set font size for asset groups table */
+.asset-groups th{
+    font-size: 0.95rem;
+}
+
+.asset-groups td {
+    font-size: 0.875rem;
 }
 
 /* Dunkelmodusvariante für die Ränder */
@@ -663,68 +554,8 @@ td {
 }
 
 /* Mobile optimizations */
-@media (max-width: 576px) {
-    .asset-count {
-        width: 34px;
-        height: 34px;
-        font-size: 13px;
-    }
-    
-    summary {
-        padding: 10px 14px;
-        min-height: 52px;
-    }
-    
-    summary::after {
-        width: 7px;
-        height: 7px;
-        margin-right: 4px;
-    }
-    
-    .summary-content {
-        padding-left: 10px;
-    }
-}
+/* Responsive styles */
 
-@media (max-width: 768px) {
-    .group-type {
-        font-size: 0.95rem;
-    }
-    
-    .group-name {
-        font-size: 0.95rem;
-    }
-}
-
-@media (max-width: 400px) {
-    .asset-count {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        font-size: 13px;
-    }
-    
-    summary {
-        padding: 8px 12px;
-        min-height: 48px;
-        gap: 8px;
-    }
-    
-    .group-type, .group-name {
-        font-size: 0.875rem;
-    }
-    
-    .group-separator {
-        margin: 0 4px;
-    }
-    
-    summary::after {
-        right: 14px;
-        width: 7px;
-        height: 7px;
-        border-width: 1.5px;
-    }
-}
 
 /* Perfekte vertikale Ausrichtung */
 summary {
@@ -780,83 +611,24 @@ details[open] > .table-container {
     box-shadow: 0 2px 5px rgba(0, 172, 193, 0.2);
 }
 
+/* Dark mode styles */
 [data-theme="dark"] details {
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="dark"] details:hover {
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
-/* Fix 1: Left-aligned layout for better readability */
-
-/* Fix 2: Improve dark mode button visibility */
-[data-theme="dark"] .theme-switch {
-    background-color: #2d2d2d; /* Slightly lighter than background */
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1), var(--box-shadow);
-}
-
+/* Theme icon colors */
 [data-theme="dark"] .theme-icon {
-    color: #f8f9fa; /* Light colored icon for dark mode */
+    color: #f8f9fa;
 }
 
 .theme-icon {
-    color: #333; /* Darker icon for light mode */
+    color: #333;
 }
 
-/* Mobile Optimierungen für Asset-Liste */
-@media (max-width: 576px) {
-    .asset-count {
-        width: 2.2rem;
-        height: 2.2rem;
-        margin-right: 0.75rem;
-    }
-    
-    .group-type {
-        min-width: 90px;
-        width: auto;
-        font-size: 0.95rem;
-    }
-    
-    .group-name {
-        font-size: 0.95rem;
-    }
-    
-    summary {
-        padding: 0.75rem 1rem;
-    }
-}
-
-@media (max-width: 375px) {
-    .asset-count {
-        width: 2rem;
-        height: 2rem;
-        font-size: 0.85rem;
-        margin-right: 0.5rem;
-    }
-    
-    .group-type {
-        min-width: 70px;
-        font-size: 0.9rem;
-    }
-    
-    .group-separator {
-        margin: 0 0.25rem;
-    }
-    
-    .group-name {
-        font-size: 0.9rem;
-    }
-    
-    summary {
-        padding: 0.7rem 0.75rem;
-    }
-    
-    summary::after {
-        font-size: 1rem;
-        padding-left: 0.5rem;
-    }
-}
 
 /* Dark Mode Verbesserungen für Asset-Listen */
 [data-theme="dark"] .summary-content {
@@ -945,7 +717,7 @@ summary:hover::before {
 }
 
 .updates-section > summary {
-    padding: 1.25rem;
+    padding: 1rem;
 }
 
 .updates-section .table-container {
@@ -954,7 +726,7 @@ summary:hover::before {
 }
 
 .updates-section h2 {
-    font-size: 1.25rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
     margin-top: 0;
@@ -981,7 +753,7 @@ summary:hover::before {
     font-weight: 600;
     border-bottom: 1px solid var(--border-color);
     color: var(--text-secondary);
-    font-size: 0.875rem;
+    font-size: 0.95rem;
 }
 
 .updates-section td {
@@ -990,45 +762,13 @@ summary:hover::before {
     font-size: 0.875rem;
 }
 
+.updates-section td:last-child,
+.updates-section th:last-child {
+    text-align: right;
+}
+
 .updates-section tr:last-child td {
     border-bottom: none;
-}
-
-/* Mobile optimizations for Recent Changes */
-@media (max-width: 768px) {
-    .updates-section > summary {
-        padding: 1rem;
-    }
-    
-    .updates-section table {
-        font-size: 0.9rem;
-    }
-    
-    .updates-section th,
-    .updates-section td {
-        padding: 0.5rem 0.4rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .updates-section {
-        padding: 0.75rem;
-        margin: 1rem 0;
-    }
-    
-    .updates-section h2 {
-        font-size: 1.1rem;
-    }
-    
-    .updates-section th,
-    .updates-section td {
-        padding: 0.5rem 0.3rem;
-        font-size: 0.85rem;
-    }
-    
-    .updates-section tr:last-child td {
-        border-bottom: none;
-    }
 }
 
 /* Recent Changes Row Styling */
@@ -1059,29 +799,68 @@ summary:hover::before {
     max-width: 100%; /* Begrenzt Breite auf Container */
 }
 
-/* Tabellenzellen besser für mobile Ansicht optimieren */
-@media (max-width: 576px) {
+
+/* Mobile Typography Adjustments */
+@media (max-width: 767px) {
+    html {
+        font-size: 0.9rem;
+    }
+
+    h1 {
+        font-size: 1.5rem; /* Kleinere Schrift auf Mobilgeräten */
+        padding-right: 0; /* Kein rechtes Padding mehr nötig */
+        text-align: center; /* Für bessere mobile Darstellung */
+    }
+
+    h2 {
+        font-size: 1.2rem;
+    }
+
+    .search-box {
+        font-size: 14px;
+    }
+
+    .group-type,
+    .group-name {
+        font-size: 0.9rem;
+    }
+
+    .asset-count {
+        font-size: 0.9rem;
+        width: 32px;
+        height: 32px;
+    }
+
+    .app-header {
+        padding-top: 10px;
+        padding-bottom: 8px;
+        gap: 0.5rem; /* Abstand zwischen Elementen verringern */
+    }
+
+    .controls-section {
+        padding-top: 0.5rem; /* Abstand nach oben verringern */
+    }
+
+    .theme-toggle-container {
+        right: 12px;
+        top: 12px;
+    }
+    
+    #theme-toggle {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .updates-section > summary {
+        padding: 1rem;
+    }
+    
     .updates-section table {
-        table-layout: fixed; /* Hilft bei der Breitenverteilung */
-        width: 100%;
+        font-size: 0.9rem;
     }
     
     .updates-section th,
     .updates-section td {
-        padding: 0.75rem 0.5rem;
-        font-size: 0.85rem;
-        white-space: normal; /* Text umbrechen erlauben */
-        word-wrap: break-word; /* Lange Worte umbrechen */
-    }
-    
-    /* Spaltenbreiten anpassen */
-    .updates-section th:first-child,
-    .updates-section td:first-child {
-        width: 33%; /* Datum-Spalte */
-    }
-    
-    .updates-section th:last-child,
-    .updates-section td:last-child {
-        width: 33%; /* Status-Spalte */
+        padding: 0.5rem 0.4rem;
     }
 }
