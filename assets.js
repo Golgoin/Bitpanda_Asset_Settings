@@ -406,9 +406,9 @@ function filterAssets() {
             const cells = row.querySelectorAll('td');
             const name = cells[0].textContent.toLowerCase();
             const symbol = cells[1].textContent.toLowerCase();
-            const maintenance = cells[5].textContent === '✅';
-            const withdraw = cells[6].textContent === '✅';
-            const deposit = cells[7].textContent === '✅';
+            const maintenance = cells[4].textContent === '✅';
+            const withdraw = cells[5].textContent === '✅';
+            const deposit = cells[6].textContent === '✅';
 
             const matchesSearch = name.includes(searchTerm) || symbol.includes(searchTerm);
             const matchesMaintenance = !maintenanceFilter || maintenance;
