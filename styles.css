@@ -90,6 +90,63 @@ html {
     scroll-behavior: smooth;
 }
 
+/* Mobile Typography Adjustments */
+@media (max-width: 767px) {
+    html {
+        font-size: 14px; /* Reduce base font size for mobile */
+    }
+
+    h1 {
+        font-size: 1.3rem;
+        margin-top: 44px;
+    }
+
+    h2 {
+        font-size: 1.2rem;
+    }
+
+    .search-box {
+        font-size: 14px;
+    }
+
+    .group-type,
+    .group-name {
+        font-size: 0.9rem;
+    }
+
+    .asset-count {
+        font-size: 13px;
+    }
+}
+
+/* Even smaller screens */
+@media (max-width: 375px) {
+    html {
+        font-size: 13px; /* Further reduce base font size for very small screens */
+    }
+
+    h1 {
+        font-size: 1.2rem;
+    }
+
+    h2 {
+        font-size: 1.1rem;
+    }
+
+    .search-box {
+        font-size: 13px;
+    }
+
+    .group-type,
+    .group-name {
+        font-size: 0.85rem;
+    }
+
+    .asset-count {
+        font-size: 12px;
+    }
+}
+
 body {
     font-family: var(--font-family-base);
     line-height: var(--line-height-base);
