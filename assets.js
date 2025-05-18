@@ -245,7 +245,7 @@ function renderUpdatesTable(updates, container) {
                             </tr>
                             <tr class="description-row" style="display: none; background-color: inherit;">
                                 <td colspan="3" style="text-align: left;">
-                                    <strong>Description:</strong> ${update.description}
+                                    <strong></strong> ${update.description}
                                 </td>
                             </tr>
                         `;
