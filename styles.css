@@ -738,6 +738,11 @@ summary:hover::before {
 .updates-section .table-container {
     padding: 0;
     border-top: none;
+    max-height: 300px; /* Set a reasonable max height for scrolling */
+    overflow-y: auto;
+    overflow-x: auto;
+    width: 100%;
+    position: relative;
 }
 
 .updates-section h2 {
@@ -763,10 +768,14 @@ summary:hover::before {
 }
 
 .updates-section th {
-    text-align: left;
+    position: sticky;
+    top: 0;
+    background: var(--header-bg);
+    z-index: 2;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    border-bottom: 2px solid var(--border-color);
     padding: 0.75rem 0.5rem;
     font-weight: 600;
-    border-bottom: 1px solid var(--border-color);
     color: var(--text-secondary);
     font-size: 0.95rem;
 }

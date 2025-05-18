@@ -206,13 +206,14 @@ function renderUpdatesTable(updates, container) {
     updatesSection.className = 'updates-section';
     updatesSection.open = true;
     updatesSection.innerHTML = `
-            <summary>
-                <div class="summary-content">
-                    <span class="group-type">Recent Changes</span>
-                    <span class="group-separator">-</span>
-                    <span class="group-name">status.bitpanda.com</span>
-                </div>
-            </summary>
+        <summary>
+            <div class="summary-content">
+                <span class="group-type">Recent Changes</span>
+                <span class="group-separator">-</span>
+                <span class="group-name">status.bitpanda.com</span>
+            </div>
+        </summary>
+        <div class="table-container">
             <table>
                 <thead>
                     <tr>
@@ -258,7 +259,7 @@ function renderUpdatesTable(updates, container) {
                     }).join('')}
                 </tbody>
             </table>
-        </details>
+        </div>
     `;
     container.appendChild(updatesSection);
 
