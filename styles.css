@@ -801,7 +801,7 @@ summary:hover::before {
 
 
 /* Mobile Typography Adjustments */
-@media (max-width: 700px) {
+@media (max-width: 650px) {
     html {
         font-size: 0.9rem;
     }
@@ -862,5 +862,11 @@ summary:hover::before {
     .updates-section th,
     .updates-section td {
         padding: 0.5rem 0.4rem;
+    }
+}
+
+@media (max-width: 450px) {
+    html {
+        font-size: 0.8rem;
     }
 }
