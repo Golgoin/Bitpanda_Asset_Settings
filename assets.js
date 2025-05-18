@@ -7,22 +7,12 @@ const STATUS_SYMBOLS = {
 async function fetchAssetData() {
     try {
         console.log('Starting API requests...');
-        
-        // Fetch asset settings and currencies data
-        const [settingsResponse, currenciesResponse] = await Promise.all([
-            fetch('https://api.bitpanda.com/v1/assets/settings'),
-            fetch('https://api.bitpanda.com/v3/currencies')
-        ]);
-        
-        console.log('API responses received:');
-        console.log('Settings response status:', settingsResponse.status);
-        console.log('Currencies response status:', currenciesResponse.status);
-        
-        // Check if responses are successful
-        if (!settingsResponse.ok || !currenciesResponse.ok) {
-            throw new Error(`API request failed: Settings (${settingsResponse.status}), Currencies (${currenciesResponse.status})`);
+        // Fetch combined asset settings and currencies data from new endpoint
+        const settingsResponse = await fetch('https://bitpanda.visionresources.info/settings');
+        console.log('Settings endpoint response status:', settingsResponse.status);
+        if (!settingsResponse.ok) {
+            throw new Error(`API request failed: Settings (${settingsResponse.status})`);
         }
-
         // Try to fetch updates from the API first, then fall back to local file if that fails
         let updates = [];
         try {
@@ -48,36 +38,25 @@ async function fetchAssetData() {
                 // updates remains an empty array
             }
         }
-
-        // Process responses
+        // Process response
         const settings = await settingsResponse.json();
-        const currencies = await currenciesResponse.json();
-        
-        // Log full response structures for debugging
         console.log('Full settings response structure:', JSON.stringify(settings).slice(0, 200) + '...');
-        console.log('Full currencies response structure:', JSON.stringify(currencies).slice(0, 200) + '...');
         console.log('Updates data:', updates);
-
-        // Combine the data
-        const combinedAssets = processAssetData(settings, currencies);
+        // Combine the data (settings is now the only source)
+        const combinedAssets = processAssetData(settings);
         console.log('Combined assets:', combinedAssets);
-        
         const container = document.getElementById('assetGroups');
         container.innerHTML = '';
-          const updatesContainer = document.getElementById('updatesSection');
-
+        const updatesContainer = document.getElementById('updatesSection');
         // Check if updates were successfully fetched
         if (updates && updates.length > 0) {
-            // Render the updates table only if data was successfully retrieved
             renderUpdatesTable(updates, updatesContainer);
         } else {
-            // Show a warning message about updates being unavailable
             const warningSection = document.createElement('div');
             warningSection.className = 'updates-section warning-section';
             warningSection.innerHTML = `
                 <h2>Status Updates Unavailable</h2>
                 <p class="updates-subtitle">Updates could not be loaded at this time</p>
-                
                 <div class="warning-card">
                     <div class="warning-icon">⚠️</div>
                     <div class="warning-content">
@@ -94,8 +73,6 @@ async function fetchAssetData() {
             `;
             updatesContainer.appendChild(warningSection);
         }
-        
-        // Always render the asset groups
         renderAssetGroups(combinedAssets);
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -103,99 +80,11 @@ async function fetchAssetData() {
     }
 }
 
-function processAssetData(settings, currencies) {
-    const assets = [];
-    const currencyMap = new Map();
-
-    // Log data for debugging
-    console.log('Settings data structure check:', settings.data ? 'Has data property' : 'No data property');
-    console.log('Currencies data structure check:', currencies.data ? 'Has data property' : 'No data property');
-    
-    if (!settings.data || !currencies.data) {
-        console.error('Invalid API response structure');
-        return [];
-    }
-    
-    // Check the structure of the currencies object
-    if (currencies.data.attributes) {
-        console.log('Raw currency data:', currencies.data.attributes);
-        
-        // Get all possible currency types from the response
-        const allCurrencies = Object.values(currencies.data.attributes)
-            .filter(Array.isArray)
-            .flat();
-        
-        console.log('Processed currencies:', allCurrencies.length);
-        
-        // Process currencies
-        allCurrencies.forEach(currency => {
-            if (currency.attributes && currency.attributes.pid) {  // Only map currencies that have a PID
-                console.log('Processing currency:', {
-                    pid: currency.attributes.pid,
-                    name: currency.attributes.name,
-                    type: currency.attributes.asset_type_name,
-                    group: currency.attributes.asset_group_name
-                });
-                currencyMap.set(currency.attributes.pid, {
-                    name: currency.attributes.name,
-                    symbol: currency.attributes.symbol,
-                    asset_type_name: currency.attributes.asset_type_name,
-                    asset_group_name: currency.attributes.asset_group_name
-                });
-            }
-        });
-    } else if (currencies.data.length > 0) {
-        // Try alternate structure if the currency data has a different format
-        console.log('Using alternate currency data structure');
-        
-        currencies.data.forEach(currency => {
-            if (currency.attributes && currency.attributes.pid) {
-                console.log('Processing currency (alt):', {
-                    pid: currency.attributes.pid,
-                    name: currency.attributes.name
-                });
-                currencyMap.set(currency.attributes.pid, {
-                    name: currency.attributes.name,
-                    symbol: currency.attributes.symbol,
-                    asset_type_name: currency.attributes.asset_type_name || 'Unknown',
-                    asset_group_name: currency.attributes.asset_group_name || 'Unknown'
-                });
-            }
-        });
-    } else {
-        console.error('Could not determine currency data structure');
-    }
-
-    // Process settings and combine with currency data
-    settings.data.forEach(setting => {
-        if (setting.type === "asset_settings" && setting.attributes && setting.attributes.pid) {
-            const lookupId = setting.attributes.pid;
-            console.log('Looking up setting:', {
-                id: setting.id,
-                pid: setting.attributes.pid,
-                lookupId: lookupId,
-                found: currencyMap.has(lookupId)
-            });
-            const currencyData = currencyMap.get(lookupId);
-            if (currencyData) {
-                assets.push({
-                    name: currencyData.name,
-                    symbol: currencyData.symbol,
-                    asset_type_name: currencyData.asset_type_name,
-                    asset_group_name: currencyData.asset_group_name,
-                    available: setting.attributes.available,
-                    buy_active: setting.attributes.buy_active,
-                    sell_active: setting.attributes.sell_active,
-                    maintenance_enabled: setting.attributes.maintenance_enabled,
-                    withdraw_active: setting.attributes.withdraw_active,
-                    deposit_active: setting.attributes.deposit_active,
-                    automated_order_active: setting.attributes.automated_order_active
-                });
-            }
-        }
-    });
-
-    return assets;
+// Update processAssetData to use new settings structure
+function processAssetData(settings) {
+    // settings is now an array of asset objects (see assets_with_settings.json)
+    // Add any additional processing if needed, e.g., grouping, mapping, etc.
+    return settings;
 }
 
 function groupAssets(assets) {
@@ -281,6 +170,7 @@ function renderAssetGroups(assets) {
                                 <th>⬆️</th>
                                 <th>⬇️</th>
                                 <th>Limit Order</th>
+                                <th>Stake</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -294,6 +184,7 @@ function renderAssetGroups(assets) {
                                     <td>${STATUS_SYMBOLS[asset.withdraw_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.deposit_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.automated_order_active]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.stakeable]}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -388,6 +279,7 @@ function filterAssets() {
     const maintenanceFilter = document.getElementById('maintenanceFilter').checked;
     const tradeOnlyFilter = document.getElementById('tradeOnlyFilter').checked;
     const fullyIntegratedFilter = document.getElementById('fullyIntegratedFilter').checked;
+    const stakeableFilter = document.getElementById('stakeableFilter').checked;
     // Specifically target details in the assetGroups container, excluding the updates section
     const details = document.getElementById('assetGroups').querySelectorAll('details');
     const noResults = document.getElementById('noResults');
@@ -409,13 +301,15 @@ function filterAssets() {
             const maintenance = cells[4].textContent === '✅';
             const withdraw = cells[5].textContent === '✅';
             const deposit = cells[6].textContent === '✅';
+            const stakeable = cells[8].textContent === '✅';
 
             const matchesSearch = name.includes(searchTerm) || symbol.includes(searchTerm);
             const matchesMaintenance = !maintenanceFilter || maintenance;
             const matchesTradeOnly = !tradeOnlyFilter || (!withdraw && !deposit);
             const matchesFullyIntegrated = !fullyIntegratedFilter || (withdraw || deposit);
+            const matchesStakeable = !stakeableFilter || stakeable;
 
-            const isVisible = matchesSearch && matchesMaintenance && matchesTradeOnly && matchesFullyIntegrated;
+            const isVisible = matchesSearch && matchesMaintenance && matchesTradeOnly && matchesFullyIntegrated && matchesStakeable;
             row.style.display = isVisible ? '' : 'none';
             if (isVisible) visibleRows++;
         });
@@ -482,11 +376,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const maintenanceFilter = document.getElementById('maintenanceFilter');
     const tradeOnlyFilter = document.getElementById('tradeOnlyFilter');
     const fullyIntegratedFilter = document.getElementById('fullyIntegratedFilter');
+    const stakeableFilter = document.getElementById('stakeableFilter');
 
     searchInput.addEventListener('input', filterAssets);
     maintenanceFilter.addEventListener('change', filterAssets);
     tradeOnlyFilter.addEventListener('change', filterAssets);
     fullyIntegratedFilter.addEventListener('change', filterAssets);
+    stakeableFilter.addEventListener('change', filterAssets);
 
     // Fetch initial data
     fetchAssetData();
