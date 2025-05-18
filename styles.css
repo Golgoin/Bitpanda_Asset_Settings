@@ -501,6 +501,21 @@ details[open] summary::after {
     scrollbar-width: thin;
     scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
     width: 100%; /* Volle Breite des Containers */
+    max-height: 600px;
+    overflow-y: scroll;
+    /* Optional: for consistent look across browsers */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--bg-secondary);
+}
+
+/* For Webkit browsers (Chrome, Safari) */
+.table-container::-webkit-scrollbar {
+    width: 8px;
+    background: var(--bg-secondary);
+}
+.table-container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
 }
 
 table {
@@ -869,4 +884,18 @@ summary:hover::before {
     html {
         font-size: 0.8rem;
     }
+}
+
+.table-container th {
+    position: sticky;
+    top: 0;
+    background: var(--header-bg);
+    z-index: 2;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    border-bottom: 2px solid var(--border-color);
+}
+
+[data-theme="dark"] .table-container th {
+    background: var(--header-bg);
+    border-bottom: 2px solid rgba(255,255,255,0.10);
 }
