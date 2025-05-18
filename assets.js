@@ -4,6 +4,12 @@ const STATUS_SYMBOLS = {
     null: '⚪'
 };
 
+const MAINTENANCE_SYMBOLS = {
+    true: '🚧',
+    false: '🟢',
+    null: '⚪'
+};
+
 async function fetchAssetData() {
     try {
         console.log('Starting API requests...');
@@ -166,11 +172,11 @@ function renderAssetGroups(assets) {
                                 <th>Symbol</th>
                                 <th>Buy</th>
                                 <th>Sell</th>
-                                <th>🚧</th>
                                 <th>⬆️</th>
                                 <th>⬇️</th>
                                 <th>Limit Order</th>
                                 <th>Stake</th>
+                                <th>🚧</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -180,11 +186,11 @@ function renderAssetGroups(assets) {
                                     <td>${asset.symbol}</td>
                                     <td>${STATUS_SYMBOLS[asset.buy_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.sell_active]}</td>
-                                    <td>${STATUS_SYMBOLS[asset.maintenance_enabled]}</td>
                                     <td>${STATUS_SYMBOLS[asset.withdraw_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.deposit_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.automated_order_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.stakeable]}</td>
+                                    <td>${MAINTENANCE_SYMBOLS[asset.maintenance_enabled]}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -298,10 +304,10 @@ function filterAssets() {
             const cells = row.querySelectorAll('td');
             const name = cells[0].textContent.toLowerCase();
             const symbol = cells[1].textContent.toLowerCase();
-            const maintenance = cells[4].textContent === '✅';
-            const withdraw = cells[5].textContent === '✅';
-            const deposit = cells[6].textContent === '✅';
-            const stakeable = cells[8].textContent === '✅';
+            const maintenance = cells[8].textContent === '🚧';
+            const withdraw = cells[4].textContent === '✅';
+            const deposit = cells[5].textContent === '✅';
+            const stakeable = cells[7].textContent === '✅';
 
             const matchesSearch = name.includes(searchTerm) || symbol.includes(searchTerm);
             const matchesMaintenance = !maintenanceFilter || maintenance;
