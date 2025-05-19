@@ -182,7 +182,7 @@ function renderAssetGroups(assets) {
                         <tbody>
                             ${group.assets.map(asset => `
                                 <tr>
-                                    <td><strong>${asset.name}</strong></td>
+                                    <td>${asset.name}</td>
                                     <td>${asset.symbol}</td>
                                     <td>${STATUS_SYMBOLS[asset.buy_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.sell_active]}</td>
@@ -217,7 +217,7 @@ function renderUpdatesTable(updates, container) {
             <table>
                 <thead>
                     <tr>
-                        <th>Component</th>
+                        <th>Assset/Component</th>
                         <th>New Status</th>
                         <th>Changed At</th>
                     </tr>
@@ -244,7 +244,7 @@ function renderUpdatesTable(updates, container) {
 
                         return `
                             <tr class="toggle-description" style="cursor: pointer;">
-                                <td><strong>${update.component_name}</strong></td>                                
+                                <td>${update.component_name}</td>                                
                                 <td class="${statusClass}">
                                     <span class="status-badge">${formatStatusText(update.new_status)}</span>
                                 </td>

@@ -49,7 +49,7 @@
     --font-weight-black: 700;
     
     /* Layout */
-    --container-max-width: 900px;
+    --container-max-width: 750px;
     --section-spacing: 2rem;
     --content-padding: 1.5rem;
     --border-radius-sm: 0.25rem;
@@ -738,7 +738,7 @@ summary:hover::before {
 .updates-section .table-container {
     padding: 0;
     border-top: none;
-    max-height: 300px; /* Set a reasonable max height for scrolling */
+    max-height: 400px; /* Set a reasonable max height for scrolling */
     overflow-y: auto;
     overflow-x: auto;
     width: 100%;
@@ -887,11 +887,31 @@ summary:hover::before {
     .updates-section td {
         padding: 0.5rem 0.4rem;
     }
+
+    .updates-section .table-container {
+    padding: 0;
+    border-top: none;
+    max-height: 300px; /* Set a reasonable max height for scrolling */
+    overflow-y: auto;
+    overflow-x: auto;
+    width: 100%;
+    position: relative;
+}
 }
 
 @media (max-width: 450px) {
     html {
         font-size: 0.8rem;
+    }
+
+    .updates-section .table-container {
+    padding: 0;
+    border-top: none;
+    max-height: 250px; /* Set a reasonable max height for scrolling */
+    overflow-y: auto;
+    overflow-x: auto;
+    width: 100%;
+    position: relative;
     }
 }
 
