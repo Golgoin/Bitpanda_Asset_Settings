@@ -928,3 +928,27 @@ summary:hover::before {
     background: var(--header-bg);
     border-bottom: 2px solid rgba(255,255,255,0.10);
 }
+
+.description-row {
+    background-color: #ececec; /* more subtle, slightly darker than white for light mode */
+    transition: background 0.2s;
+}
+[data-theme="dark"] .description-row {
+    background-color: #23272e; /* much lighter than main dark bg, but not too bright */
+}
+
+.desc-indicator {
+    margin-left: 0.4em;
+    color: #00b5ad;
+    font-size: 1em;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    cursor: pointer;
+}
+.toggle-description:hover .desc-indicator {
+    opacity: 1;
+    text-shadow: 0 0 2px #00b5ad44;
+}
+[data-theme="dark"] .desc-indicator {
+    color: #4fd2c2;
+}

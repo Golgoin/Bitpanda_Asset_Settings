@@ -199,15 +199,12 @@ function renderUpdatesTable(updates, container) {
                 </thead>
                 <tbody>
                     ${updates.map(update => {
-                        // Determine status class for styling
                         let statusClass = 'status-neutral';
                         if (update.new_status === 'operational') {
                             statusClass = 'status-positive';
                         } else if (['degraded_performance', 'partial_outage', 'major_outage'].includes(update.new_status)) {
                             statusClass = 'status-negative';
                         }
-
-                        // Format the date
                         const date = new Date(update.changed_at);
                         const formattedDate = date.toLocaleString(undefined, {
                             year: 'numeric',
@@ -216,20 +213,21 @@ function renderUpdatesTable(updates, container) {
                             hour: '2-digit',
                             minute: '2-digit'
                         });
-
+                        // Only render description row if description is not null/empty
+                        const hasDescription = update.description && update.description.trim() !== '';
                         return `
-                            <tr class="toggle-description" style="cursor: pointer;">
-                                <td>${update.component_name}</td>                                
+                            <tr class="toggle-description${hasDescription ? ' has-description' : ''}" style="cursor: pointer;">
+                                <td>${update.component_name} ${hasDescription ? '<span class="desc-indicator" title="Show description">🛈</span>' : ''}</td>
                                 <td class="${statusClass}">
                                     <span class="status-badge">${formatStatusText(update.new_status)}</span>
                                 </td>
                                 <td>${formattedDate}</td>
                             </tr>
-                            <tr class="description-row" style="display: none; background-color: inherit;">
+                            ${hasDescription ? `<tr class="description-row" style="display: none">
                                 <td colspan="3" style="text-align: left;">
                                     <strong></strong> ${update.description}
                                 </td>
-                            </tr>
+                            </tr>` : ''}
                         `;
                     }).join('')}
                 </tbody>
@@ -331,18 +329,26 @@ function filterAssets() {
             const tbody = updatesTable.querySelector('tbody');
             const prevNoResults = tbody.querySelector('.no-updates-results');
             if (prevNoResults) tbody.removeChild(prevNoResults);
-            for (let i = 0; i < updateRows.length; i += 2) {
-                const row = updateRows[i]; // main row
-                const descRow = updateRows[i + 1]; // description row
-                if (!row || !descRow) continue;
+            // Updated logic: iterate through all rows, pairing main and description rows only if present
+            for (let i = 0; i < updateRows.length; ) {
+                const row = updateRows[i];
+                if (!row) break;
+                if (!row.classList.contains('toggle-description')) {
+                    i++;
+                    continue;
+                }
                 const nameCell = row.querySelector('td');
-                const descText = descRow.textContent ? descRow.textContent.toLowerCase() : '';
+                let descRow = null;
+                if (updateRows[i + 1] && updateRows[i + 1].classList.contains('description-row')) {
+                    descRow = updateRows[i + 1];
+                }
+                const descText = descRow && descRow.textContent ? descRow.textContent.toLowerCase() : '';
                 const name = nameCell ? nameCell.textContent.toLowerCase() : '';
                 // Match search in either the main row (component name) or the description row
                 const matchesSearch = name.includes(searchTerm) || descText.includes(searchTerm);
                 row.style.display = matchesSearch ? '' : 'none';
-                descRow.style.display = matchesSearch ? descRow.style.display : 'none';
                 if (matchesSearch) updatesVisible++;
+                i += descRow ? 2 : 1;
             }
             // If no updates are visible, show a 'no results' row
             if (updatesVisible === 0) {
