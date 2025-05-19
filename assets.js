@@ -30,7 +30,7 @@ async function fetchAssetData() {
             throw new Error(`API request failed: Updates (${updatesResponse.status})`);
         }
         if (!newAssetsResponse.ok) {
-            throw new Error(`API request failed: Updates (${updatesResponse.status})`);
+            throw new Error(`API request failed: NewAssets (${newAssetsResponse.status})`);
         }
 
         const settings = await settingsResponse.json();
@@ -40,48 +40,23 @@ async function fetchAssetData() {
         // Process response
         console.log('Full settings response structure:', JSON.stringify(settings).slice(0, 200) + '...');
         console.log('Updates data:', updates);
-        // Combine the data (settings is now the only source)
+        
         const combinedAssets = processAssetData(settings, newAssets);
         console.log('Combined assets:', combinedAssets);
         const container = document.getElementById('assetGroups');
         container.innerHTML = '';
         const updatesContainer = document.getElementById('updatesSection');
-        // Check if updates were successfully fetched
-        if (updates && updates.length > 0) {
-            renderUpdatesTable(updates, updatesContainer);
-        } else {
-            const warningSection = document.createElement('div');
-            warningSection.className = 'updates-section warning-section';
-            warningSection.innerHTML = `
-                <h2>Status Updates Unavailable</h2>
-                <p class="updates-subtitle">Updates could not be loaded at this time</p>
-                <div class="warning-card">
-                    <div class="warning-icon">⚠️</div>
-                    <div class="warning-content">
-                        <p class="error">Unable to retrieve status updates.</p>
-                        <p>This may be due to:</p>
-                        <ul>
-                            <li>CORS restrictions when running locally (use <code>run_local.bat</code>)</li>
-                            <li>The updates service being temporarily unavailable</li>
-                            <li>Network connectivity issues</li>
-                        </ul>
-                        <p class="warning-note">You can still view all asset data below.</p>
-                    </div>
-                </div>
-            `;
-            updatesContainer.appendChild(warningSection);
-        }
+        
+        renderUpdatesTable(updates, updatesContainer);
         renderAssetGroups(combinedAssets);
+
     } catch (error) {
         console.error('Error fetching data:', error);
         document.getElementById('assetGroups').innerHTML = '<p class="error">Error loading data. Please try again later.</p>';
     }
 }
 
-// Update processAssetData to use new settings structure
 function processAssetData(settings, newAssets) {
-    // settings is now an array of asset objects (see assets_with_settings.json)
-    // newAssets is an array of asset objects (from /v1/prices/assets/new)
     // Add a boolean field "New" to each asset: true if its pid is in newAssets, else false
     let newPids = [];
     if (newAssets && Array.isArray(newAssets.data)) {
@@ -344,6 +319,44 @@ function filterAssets() {
     });
 
     noResults.style.display = totalVisible === 0 ? 'block' : 'none';
+
+    // --- Filter updates table by search box ---
+    const updatesSection = document.querySelector('.updates-section');
+    if (updatesSection) {
+        const updatesTable = updatesSection.querySelector('table');
+        if (updatesTable) {
+            const updateRows = updatesTable.querySelectorAll('tbody tr');
+            let updatesVisible = 0;
+            // Remove any previous 'no results' row
+            const tbody = updatesTable.querySelector('tbody');
+            const prevNoResults = tbody.querySelector('.no-updates-results');
+            if (prevNoResults) tbody.removeChild(prevNoResults);
+            for (let i = 0; i < updateRows.length; i += 2) {
+                const row = updateRows[i]; // main row
+                const descRow = updateRows[i + 1]; // description row
+                if (!row || !descRow) continue;
+                const nameCell = row.querySelector('td');
+                const descText = descRow.textContent ? descRow.textContent.toLowerCase() : '';
+                const name = nameCell ? nameCell.textContent.toLowerCase() : '';
+                // Match search in either the main row (component name) or the description row
+                const matchesSearch = name.includes(searchTerm) || descText.includes(searchTerm);
+                row.style.display = matchesSearch ? '' : 'none';
+                descRow.style.display = matchesSearch ? descRow.style.display : 'none';
+                if (matchesSearch) updatesVisible++;
+            }
+            // If no updates are visible, show a 'no results' row
+            if (updatesVisible === 0) {
+                const noRow = document.createElement('tr');
+                noRow.className = 'no-updates-results';
+                const td = document.createElement('td');
+                td.colSpan = 3;
+                td.style.textAlign = 'center';
+                td.textContent = 'No updates match your search.';
+                noRow.appendChild(td);
+                tbody.appendChild(noRow);
+            }
+        }
+    }
 }
 
 function toggleTheme() {
