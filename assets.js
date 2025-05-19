@@ -185,7 +185,7 @@ function renderUpdatesTable(updates, container) {
             <div class="summary-content">
                 <span class="group-type">Recent Changes</span>
                 <span class="group-separator">-</span>
-                <span class="group-name">status.bitpanda.com</span>
+                <span class="group-name">for assets and components</span>
             </div>
         </summary>
         <div class="table-container">
