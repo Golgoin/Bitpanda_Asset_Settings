@@ -13,43 +13,35 @@ const MAINTENANCE_SYMBOLS = {
 async function fetchAssetData() {
     try {
         console.log('Starting API requests...');
-        // Fetch combined asset settings and currencies data from new endpoint
-        const settingsResponse = await fetch('https://bitpanda.visionresources.info/settings');
+        // Fetch combined asset settings and updates data from both endpoints in parallel
+        const [settingsResponse, updatesResponse, newAssetsResponse] = await Promise.all([
+            fetch('https://bitpanda.visionresources.info/settings'),
+            fetch('https://bitpanda.visionresources.info/updates'),
+            fetch('https://api.bitpanda.com/v1/prices/assets/new')
+        ]);
         console.log('Settings endpoint response status:', settingsResponse.status);
+        console.log('Updates endpoint response status:', updatesResponse.status);
+        console.log('New assets endpoint response status:', newAssetsResponse.status);
+
         if (!settingsResponse.ok) {
             throw new Error(`API request failed: Settings (${settingsResponse.status})`);
         }
-        // Try to fetch updates from the API first, then fall back to local file if that fails
-        let updates = [];
-        try {
-            const updatesResponse = await fetch('https://bitpanda.visionresources.info/updates');
-            if (updatesResponse.ok) {
-                updates = await updatesResponse.json();
-                console.log('Updates loaded from API successfully');
-            } else {
-                throw new Error(`Updates API returned status: ${updatesResponse.status}`);
-            }
-        } catch (error) {
-            console.warn('Failed to load updates from API, trying local fallback:', error);
-            try {
-                const localUpdatesResponse = await fetch('updates.json');
-                if (localUpdatesResponse.ok) {
-                    updates = await localUpdatesResponse.json();
-                    console.log('Updates loaded from local file successfully');
-                } else {
-                    throw new Error(`Local updates file returned status: ${localUpdatesResponse.status}`);
-                }
-            } catch (localError) {
-                console.error('Failed to load updates from local file:', localError);
-                // updates remains an empty array
-            }
+        if (!updatesResponse.ok) {
+            throw new Error(`API request failed: Updates (${updatesResponse.status})`);
         }
-        // Process response
+        if (!newAssetsResponse.ok) {
+            throw new Error(`API request failed: Updates (${updatesResponse.status})`);
+        }
+
         const settings = await settingsResponse.json();
+        const updates = await updatesResponse.json();
+        const newAssets = await newAssetsResponse.json();
+
+        // Process response
         console.log('Full settings response structure:', JSON.stringify(settings).slice(0, 200) + '...');
         console.log('Updates data:', updates);
         // Combine the data (settings is now the only source)
-        const combinedAssets = processAssetData(settings);
+        const combinedAssets = processAssetData(settings, newAssets);
         console.log('Combined assets:', combinedAssets);
         const container = document.getElementById('assetGroups');
         container.innerHTML = '';
@@ -87,10 +79,18 @@ async function fetchAssetData() {
 }
 
 // Update processAssetData to use new settings structure
-function processAssetData(settings) {
+function processAssetData(settings, newAssets) {
     // settings is now an array of asset objects (see assets_with_settings.json)
-    // Add any additional processing if needed, e.g., grouping, mapping, etc.
-    return settings;
+    // newAssets is an array of asset objects (from /v1/prices/assets/new)
+    // Add a boolean field "New" to each asset: true if its pid is in newAssets, else false
+    let newPids = [];
+    if (newAssets && Array.isArray(newAssets.data)) {
+        newPids = newAssets.data.map(a => a.pid);
+    }
+    return settings.map(asset => ({
+        ...asset,
+        New: newPids.includes(asset.pid)
+    }));
 }
 
 function groupAssets(assets) {
@@ -182,7 +182,7 @@ function renderAssetGroups(assets) {
                         <tbody>
                             ${group.assets.map(asset => `
                                 <tr>
-                                    <td>${asset.name}</td>
+                                    <td>${asset.name}${asset.New ? ' 🆕' : ''}</td>
                                     <td>${asset.symbol}</td>
                                     <td>${STATUS_SYMBOLS[asset.buy_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.sell_active]}</td>
@@ -287,6 +287,7 @@ function filterAssets() {
     const tradeOnlyFilter = document.getElementById('tradeOnlyFilter').checked;
     const fullyIntegratedFilter = document.getElementById('fullyIntegratedFilter').checked;
     const stakeableFilter = document.getElementById('stakeableFilter').checked;
+    const newAssetsFilter = document.getElementById('newAssetsFilter')?.checked;
     // Specifically target details in the assetGroups container, excluding the updates section
     const details = document.getElementById('assetGroups').querySelectorAll('details');
     const noResults = document.getElementById('noResults');
@@ -301,7 +302,6 @@ function filterAssets() {
 
         rows.forEach(row => {
             if (!row.querySelector('td')) return; // Skip header rows
-            
             const cells = row.querySelectorAll('td');
             const name = cells[0].textContent.toLowerCase();
             const symbol = cells[1].textContent.toLowerCase();
@@ -309,14 +309,16 @@ function filterAssets() {
             const withdraw = cells[4].textContent === '✅';
             const deposit = cells[5].textContent === '✅';
             const stakeable = cells[7].textContent === '✅';
+            const isNew = cells[0].innerHTML.includes('🆕');
 
             const matchesSearch = name.includes(searchTerm) || symbol.includes(searchTerm);
             const matchesMaintenance = !maintenanceFilter || maintenance;
             const matchesTradeOnly = !tradeOnlyFilter || (!withdraw && !deposit);
             const matchesFullyIntegrated = !fullyIntegratedFilter || (withdraw || deposit);
             const matchesStakeable = !stakeableFilter || stakeable;
+            const matchesNewAssets = !newAssetsFilter || isNew;
 
-            const isVisible = matchesSearch && matchesMaintenance && matchesTradeOnly && matchesFullyIntegrated && matchesStakeable;
+            const isVisible = matchesSearch && matchesMaintenance && matchesTradeOnly && matchesFullyIntegrated && matchesStakeable && matchesNewAssets;
             row.style.display = isVisible ? '' : 'none';
             if (isVisible) visibleRows++;
         });
@@ -384,12 +386,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const tradeOnlyFilter = document.getElementById('tradeOnlyFilter');
     const fullyIntegratedFilter = document.getElementById('fullyIntegratedFilter');
     const stakeableFilter = document.getElementById('stakeableFilter');
+    const newAssetsFilter = document.getElementById('newAssetsFilter');
 
     searchInput.addEventListener('input', filterAssets);
     maintenanceFilter.addEventListener('change', filterAssets);
     tradeOnlyFilter.addEventListener('change', filterAssets);
     fullyIntegratedFilter.addEventListener('change', filterAssets);
     stakeableFilter.addEventListener('change', filterAssets);
+    newAssetsFilter.addEventListener('change', filterAssets);
 
     // Fetch initial data
     fetchAssetData();
