@@ -183,7 +183,7 @@ a:hover {
     align-items: center;
     justify-content: center;
     transform: scale(1);
-    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Sun Icon - einfacher und minimalistischer */
@@ -194,7 +194,7 @@ a:hover {
     height: 16px;
     border-radius: 50%;
     background: var(--text-primary);
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Sun Rays - reduziert und minimalistischer */
@@ -209,7 +209,7 @@ a:hover {
         -3px 0 0 0 var(--text-primary),
         0 3px 0 0 var(--text-primary),
         0 -3px 0 0 var(--text-primary);
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Moon Icon - minimalistischer */
@@ -222,7 +222,7 @@ a:hover {
     background: transparent;
     box-shadow: inset 5px -4px 0 0 var(--text-primary);
     transform: rotate(-45deg);
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Stars entfernt für minimalistischeres Design */
@@ -377,7 +377,7 @@ details {
     border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    transition: all 0.2s ease-in-out;
+    transition: var(--transition-base);
     margin-bottom: 10px;
     border: none;
 }
@@ -397,7 +397,7 @@ summary {
     justify-content: space-between;
     background-color: var(--bg-secondary);
     color: var(--text-primary);
-    transition: all 0.2s ease;
+    transition: var(--transition-base);
     position: relative;
     border: none;
     min-height: 56px;
@@ -415,7 +415,7 @@ summary::after {
     border-right: 2px solid var(--text-muted);
     border-bottom: 2px solid var(--text-muted);
     transform: rotate(45deg);
-    transition: all 0.2s ease;
+    transition: var(--transition-base);
     flex-shrink: 0;
     margin-left: 10px;
 }
@@ -527,6 +527,7 @@ table {
 th, td {
     padding: 0.5em 0.5em 0.5em; /* Konsistentes Padding für alle Zellen */
     text-align: left;
+    transition: var(--transition-base);
 }
 
 /* Center status symbols in the asset tables */
@@ -539,10 +540,13 @@ th, td {
 /* Set font size for asset groups table */
 .asset-groups th{
     font-size: 0.95rem;
+    padding: 0.5rem 0.4rem;
 }
 
 .asset-groups td {
     font-size: 0.875rem;
+    padding: 0.4rem 0.3rem;
+    transition: var(--transition-base);
 }
 
 /* Dunkelmodusvariante für die Ränder */
@@ -690,7 +694,7 @@ summary::before {
     inset: 0;
     border-radius: 12px;
     pointer-events: none;
-    transition: all 0.2s ease;
+    transition: var(--transition-base);
     opacity: 0;
     z-index: -1;
 }
@@ -778,12 +782,15 @@ summary:hover::before {
     font-weight: 600;
     color: var(--text-secondary);
     font-size: 0.95rem;
+    transition: var(--transition-base);
+    padding: 0.5rem 0.4rem;
 }
 
 .updates-section td {
-    padding: 0.75rem 0.5rem;
+    padding: 0.4rem 0.3rem;
     border-bottom: 1px solid var(--border-color);
     font-size: 0.875rem;
+    transition: var(--transition-base);
 }
 
 .updates-section td:last-child,
@@ -883,10 +890,6 @@ summary:hover::before {
         font-size: 0.9rem;
     }
     
-    .updates-section th,
-    .updates-section td {
-        padding: 0.5rem 0.4rem;
-    }
 
     .updates-section .table-container {
     padding: 0;
@@ -942,6 +945,7 @@ summary:hover::before {
     z-index: 2;
     box-shadow: 0 2px 4px rgba(0,0,0,0.03);
     border-bottom: 2px solid var(--border-color);
+    transition: var(--transition-base);
 }
 
 [data-theme="dark"] .table-container th {
@@ -951,7 +955,7 @@ summary:hover::before {
 
 .description-row {
     background-color: #ececec; /* more subtle, slightly darker than white for light mode */
-    transition: background 0.2s;
+    transition: var(--transition-base);
 }
 [data-theme="dark"] .description-row {
     background-color: #23272e; /* much lighter than main dark bg, but not too bright */
@@ -960,9 +964,9 @@ summary:hover::before {
 .desc-indicator {
     margin-left: 0.4em;
     color: #00b5ad;
-    font-size: 1em;
+    font-size: 1.1em;
     opacity: 0.7;
-    transition: opacity 0.2s;
+    transition: var(--transition-base);
     cursor: pointer;
 }
 .toggle-description:hover .desc-indicator {

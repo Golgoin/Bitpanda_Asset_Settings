@@ -217,7 +217,7 @@ function renderUpdatesTable(updates, container) {
                         const hasDescription = update.description && update.description.trim() !== '';
                         return `
                             <tr class="toggle-description${hasDescription ? ' has-description' : ''}" style="cursor: pointer;">
-                                <td>${update.component_name} ${hasDescription ? '<span class="desc-indicator" title="Show description">(i)</span>' : ''}</td>
+                                <td>${update.component_name} ${hasDescription ? '<span class="desc-indicator" title="Show description">ℹ</span>' : ''}</td>
                                 <td class="${statusClass}">
                                     <span class="status-badge">${formatStatusText(update.new_status)}</span>
                                 </td>
