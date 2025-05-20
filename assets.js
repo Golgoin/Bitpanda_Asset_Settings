@@ -163,9 +163,9 @@ function renderAssetGroups(assets) {
                                     <td>${STATUS_SYMBOLS[asset.sell_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.withdraw_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.deposit_active]}</td>
-                                    <td>${STATUS_SYMBOLS[asset.automated_order_active]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.limit_order]}</td>
                                     <td>${STATUS_SYMBOLS[asset.stakeable]}</td>
-                                    <td>${MAINTENANCE_SYMBOLS[asset.maintenance_enabled]}</td>
+                                    <td>${MAINTENANCE_SYMBOLS[asset.maintenance]}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -217,7 +217,7 @@ function renderUpdatesTable(updates, container) {
                         const hasDescription = update.description && update.description.trim() !== '';
                         return `
                             <tr class="toggle-description${hasDescription ? ' has-description' : ''}" style="cursor: pointer;">
-                                <td>${update.component_name} ${hasDescription ? '<span class="desc-indicator" title="Show description">🛈</span>' : ''}</td>
+                                <td>${update.component_name} ${hasDescription ? '<span class="desc-indicator" title="Show description">(i)</span>' : ''}</td>
                                 <td class="${statusClass}">
                                     <span class="status-badge">${formatStatusText(update.new_status)}</span>
                                 </td>

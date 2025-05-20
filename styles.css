@@ -896,7 +896,17 @@ summary:hover::before {
     overflow-x: auto;
     width: 100%;
     position: relative;
-}
+    }
+
+    .updates-section td:nth-child(3),
+    .updates-section th:nth-child(3) {
+    width: 110px; /* or your desired width */
+    }
+
+    .updates-section td:nth-child(2),
+    .updates-section th:nth-child(2) {
+    width: 130px; /* or your desired width */
+    }
 }
 
 @media (max-width: 450px) {
@@ -912,6 +922,16 @@ summary:hover::before {
     overflow-x: auto;
     width: 100%;
     position: relative;
+    }
+
+    .updates-section td:nth-child(3),
+    .updates-section th:nth-child(3) {
+    width: 95px; /* or your desired width */
+    }
+
+    .updates-section td:nth-child(2),
+    .updates-section th:nth-child(2) {
+    width: 115px; /* or your desired width */
     }
 }
 
