@@ -151,6 +151,7 @@ function renderAssetGroups(assets) {
                                 <th>⬇️</th>
                                 <th>Limit Order</th>
                                 <th>Stake</th>
+                                <th>Fusion</th>
                                 <th>🚧</th>
                             </tr>
                         </thead>
@@ -165,6 +166,7 @@ function renderAssetGroups(assets) {
                                     <td>${STATUS_SYMBOLS[asset.deposit_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.limit_order]}</td>
                                     <td>${STATUS_SYMBOLS[asset.stakeable]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.fusion]}</td>
                                     <td>${MAINTENANCE_SYMBOLS[asset.maintenance]}</td>
                                 </tr>
                             `).join('')}
@@ -180,6 +182,86 @@ function renderUpdatesTable(updates, container) {
     const updatesSection = document.createElement('details');
     updatesSection.className = 'updates-section';
     updatesSection.open = true;
+
+    let newestScheduledMaintenance = null;
+    let otherUpdates = [...updates]; // Start with all updates
+
+    // Find all scheduled maintenance updates (scheduled or in_progress)
+    const scheduledMaintenances = updates.filter(u => u.new_status === 'scheduled' || u.new_status === 'in_progress');
+
+    if (scheduledMaintenances.length > 0) {
+        // Sort them by date to find the newest (most recent)
+        scheduledMaintenances.sort((a, b) => new Date(b.changed_at) - new Date(a.changed_at));
+        newestScheduledMaintenance = scheduledMaintenances[0];
+
+        // Filter the newest scheduled maintenance out of the main list to avoid duplication
+        // All other updates, including older scheduled maintenances, will remain in otherUpdates
+        otherUpdates = updates.filter(u => u !== newestScheduledMaintenance);
+    }
+
+    let tbodyHtml = '';
+
+    // Render the pinned newest scheduled maintenance update first, if it exists
+    if (newestScheduledMaintenance) {
+        const update = newestScheduledMaintenance;
+        // Specific class for styling, consistent for scheduled and in_progress
+        const statusClass = (update.new_status === 'scheduled' || update.new_status === 'in_progress') ? 'status-scheduled-maintenance' : 'status-neutral';
+        const date = new Date(update.changed_at);
+        const formattedDate = date.toLocaleString(undefined, {
+            year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        const hasDescription = update.description && update.description.trim() !== '';
+        const pinnedIndicator = '📌 '; // Visual cue for pinned item
+
+        tbodyHtml += `
+            <tr class="toggle-description pinned-maintenance${hasDescription ? ' has-description' : ''}" style="cursor: pointer;">
+                <td>${pinnedIndicator}${update.component_name} ${hasDescription ? '<span class="desc-indicator" title="Show description">ℹ</span>' : ''}</td>
+                <td class="${statusClass}">
+                    <span class="status-badge">${formatStatusText(update.new_status)}</span>
+                </td>
+                <td>${formattedDate}</td>
+            </tr>
+            ${hasDescription ? `<tr class="description-row pinned-maintenance-desc" style="display: none">
+                <td colspan="3" style="text-align: left;">
+                    <strong></strong> ${update.description}
+                </td>
+            </tr>` : ''}
+        `;
+    }
+
+    // Render the rest of the updates
+    tbodyHtml += otherUpdates.map(update => {
+        let statusClass = 'status-neutral';
+        if (update.new_status === 'operational') {
+            statusClass = 'status-positive';
+        } else if (['degraded_performance', 'partial_outage', 'major_outage'].includes(update.new_status)) {
+            statusClass = 'status-negative';
+        } else if (update.new_status === 'scheduled' || update.new_status === 'in_progress') {
+            // Older scheduled maintenances also get this class
+            statusClass = 'status-scheduled-maintenance';
+        }
+
+        const date = new Date(update.changed_at);
+        const formattedDate = date.toLocaleString(undefined, {
+            year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+        const hasDescription = update.description && update.description.trim() !== '';
+        return `
+            <tr class="toggle-description${hasDescription ? ' has-description' : ''}" style="cursor: pointer;">
+                <td>${update.component_name} ${hasDescription ? '<span class="desc-indicator" title="Show description">ℹ</span>' : ''}</td>
+                <td class="${statusClass}">
+                    <span class="status-badge">${formatStatusText(update.new_status)}</span>
+                </td>
+                <td>${formattedDate}</td>
+            </tr>
+            ${hasDescription ? `<tr class="description-row" style="display: none">
+                <td colspan="3" style="text-align: left;">
+                    <strong></strong> ${update.description}
+                </td>
+            </tr>` : ''}
+        `;
+    }).join('');
+
     updatesSection.innerHTML = `
         <summary>
             <div class="summary-content">
@@ -198,38 +280,7 @@ function renderUpdatesTable(updates, container) {
                     </tr>
                 </thead>
                 <tbody>
-                    ${updates.map(update => {
-                        let statusClass = 'status-neutral';
-                        if (update.new_status === 'operational') {
-                            statusClass = 'status-positive';
-                        } else if (['degraded_performance', 'partial_outage', 'major_outage'].includes(update.new_status)) {
-                            statusClass = 'status-negative';
-                        }
-                        const date = new Date(update.changed_at);
-                        const formattedDate = date.toLocaleString(undefined, {
-                            year: 'numeric',
-                            month: 'numeric',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        // Only render description row if description is not null/empty
-                        const hasDescription = update.description && update.description.trim() !== '';
-                        return `
-                            <tr class="toggle-description${hasDescription ? ' has-description' : ''}" style="cursor: pointer;">
-                                <td>${update.component_name} ${hasDescription ? '<span class="desc-indicator" title="Show description">ℹ</span>' : ''}</td>
-                                <td class="${statusClass}">
-                                    <span class="status-badge">${formatStatusText(update.new_status)}</span>
-                                </td>
-                                <td>${formattedDate}</td>
-                            </tr>
-                            ${hasDescription ? `<tr class="description-row" style="display: none">
-                                <td colspan="3" style="text-align: left;">
-                                    <strong></strong> ${update.description}
-                                </td>
-                            </tr>` : ''}
-                        `;
-                    }).join('')}
+                    ${tbodyHtml}
                 </tbody>
             </table>
         </div>
@@ -244,10 +295,6 @@ function renderUpdatesTable(updates, container) {
             if (descriptionRow && descriptionRow.classList.contains('description-row')) {
                 const isVisible = descriptionRow.style.display === '';
                 descriptionRow.style.display = isVisible ? 'none' : '';
-                const arrow = row.querySelector('.arrow');
-                if (arrow) {
-                    arrow.textContent = isVisible ? '+' : '-';
-                }
             }
         });
     });
@@ -261,6 +308,7 @@ function filterAssets() {
     const fullyIntegratedFilter = document.getElementById('fullyIntegratedFilter').checked;
     const stakeableFilter = document.getElementById('stakeableFilter').checked;
     const newAssetsFilter = document.getElementById('newAssetsFilter')?.checked;
+    const fusionFilter = document.getElementById('fusionFilter')?.checked;
     // Specifically target details in the assetGroups container, excluding the updates section
     const details = document.getElementById('assetGroups').querySelectorAll('details');
     const noResults = document.getElementById('noResults');
@@ -278,11 +326,12 @@ function filterAssets() {
             const cells = row.querySelectorAll('td');
             const name = cells[0].textContent.toLowerCase();
             const symbol = cells[1].textContent.toLowerCase();
-            const maintenance = cells[8].textContent === '🚧';
+            const maintenance = cells[9].textContent === '🚧';
             const withdraw = cells[4].textContent === '✅';
             const deposit = cells[5].textContent === '✅';
             const stakeable = cells[7].textContent === '✅';
             const isNew = cells[0].innerHTML.includes('🆕');
+            const fusion = cells[8].textContent === '✅';
 
             const matchesSearch = name.includes(searchTerm) || symbol.includes(searchTerm);
             const matchesMaintenance = !maintenanceFilter || maintenance;
@@ -290,8 +339,9 @@ function filterAssets() {
             const matchesFullyIntegrated = !fullyIntegratedFilter || (withdraw || deposit);
             const matchesStakeable = !stakeableFilter || stakeable;
             const matchesNewAssets = !newAssetsFilter || isNew;
+            const matchesFusion = !fusionFilter || fusion;
 
-            const isVisible = matchesSearch && matchesMaintenance && matchesTradeOnly && matchesFullyIntegrated && matchesStakeable && matchesNewAssets;
+            const isVisible = matchesSearch && matchesMaintenance && matchesTradeOnly && matchesFullyIntegrated && matchesStakeable && matchesNewAssets && matchesFusion;
             row.style.display = isVisible ? '' : 'none';
             if (isVisible) visibleRows++;
         });
@@ -406,6 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const fullyIntegratedFilter = document.getElementById('fullyIntegratedFilter');
     const stakeableFilter = document.getElementById('stakeableFilter');
     const newAssetsFilter = document.getElementById('newAssetsFilter');
+    const fusionFilter = document.getElementById('fusionFilter');
 
     searchInput.addEventListener('input', filterAssets);
     maintenanceFilter.addEventListener('change', filterAssets);
@@ -413,6 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fullyIntegratedFilter.addEventListener('change', filterAssets);
     stakeableFilter.addEventListener('change', filterAssets);
     newAssetsFilter.addEventListener('change', filterAssets);
+    fusionFilter.addEventListener('change', filterAssets);
 
     // Fetch initial data
     fetchAssetData();

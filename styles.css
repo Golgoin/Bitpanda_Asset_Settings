@@ -266,7 +266,9 @@ a:hover {
     padding: 1.25rem;
     background-color: var(--bg-secondary);
     border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
+    box-shadow: var(--box-shadow);    
+    transition: var(--transition-base);
+    padding-top: 0.5rem; /* Abstand nach oben verringern */
 }
 
 .search-container {
@@ -866,10 +868,6 @@ summary:hover::before {
         padding-top: 10px;
         padding-bottom: 8px;
         gap: 0.5rem; /* Abstand zwischen Elementen verringern */
-    }
-
-    .controls-section {
-        padding-top: 0.5rem; /* Abstand nach oben verringern */
     }
 
     .theme-toggle-container {
