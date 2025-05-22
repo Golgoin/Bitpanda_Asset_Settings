@@ -183,64 +183,70 @@ function renderUpdatesTable(updates, container) {
     updatesSection.className = 'updates-section';
     updatesSection.open = true;
 
-    let newestScheduledMaintenance = null;
-    let otherUpdates = [...updates]; // Start with all updates
+    let itemsToPin = [];
 
-    // Find all scheduled maintenance updates (scheduled or in_progress)
+    // 1. Pin newest scheduled/in_progress maintenance
     const scheduledMaintenances = updates.filter(u => u.new_status === 'scheduled' || u.new_status === 'in_progress');
-
     if (scheduledMaintenances.length > 0) {
-        // Sort them by date to find the newest (most recent)
         scheduledMaintenances.sort((a, b) => new Date(b.changed_at) - new Date(a.changed_at));
-        newestScheduledMaintenance = scheduledMaintenances[0];
-
-        // Filter the newest scheduled maintenance out of the main list to avoid duplication
-        // All other updates, including older scheduled maintenances, will remain in otherUpdates
-        otherUpdates = updates.filter(u => u !== newestScheduledMaintenance);
+        itemsToPin.push(scheduledMaintenances[0]); // Add the newest one
     }
+
+    // 2. Pin newest "investigating" update for each component, if that's its latest status
+    const latestUpdatesByComponent = {};
+    // Sort all updates by date (oldest to newest) to easily find the latest for each component
+    const sortedUpdates = [...updates].sort((a, b) => new Date(a.changed_at) - new Date(b.changed_at));
+
+    for (const update of sortedUpdates) {
+        latestUpdatesByComponent[update.component_name] = update; // Overwrite with newer, so last one is latest
+    }
+
+    for (const componentName in latestUpdatesByComponent) {
+        const latestUpdate = latestUpdatesByComponent[componentName];
+        if (latestUpdate.new_status === 'investigating') {
+            // Add to itemsToPin if not already there (e.g. from scheduled maintenance rule)
+            if (!itemsToPin.includes(latestUpdate)) {
+                itemsToPin.push(latestUpdate);
+            }
+        }
+    }
+    
+    // Sort all pinned items by date (newest first) for rendering order
+    itemsToPin.sort((a, b) => new Date(b.changed_at) - new Date(a.changed_at));
+
+    // 3. `otherUpdates` are those not in `itemsToPin`
+    const otherUpdates = updates.filter(u => !itemsToPin.includes(u));
 
     let tbodyHtml = '';
 
-    // Render the pinned newest scheduled maintenance update first, if it exists
-    if (newestScheduledMaintenance) {
-        const update = newestScheduledMaintenance;
-        // Specific class for styling, consistent for scheduled and in_progress
-        const statusClass = (update.new_status === 'scheduled' || update.new_status === 'in_progress') ? 'status-scheduled-maintenance' : 'status-neutral';
+    // 4. Render pinned items
+    itemsToPin.forEach(update => {
         const date = new Date(update.changed_at);
         const formattedDate = date.toLocaleString(undefined, {
             year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
         const hasDescription = update.description && update.description.trim() !== '';
-        const pinnedIndicator = '📌 '; // Visual cue for pinned item
+        const pinnedIndicator = '📌 '; 
 
+        // Using generic classes for pinned rows for easier selection/styling if needed
         tbodyHtml += `
-            <tr class="toggle-description pinned-maintenance${hasDescription ? ' has-description' : ''}" style="cursor: pointer;">
+            <tr class="toggle-description pinned-row${hasDescription ? ' has-description' : ''}" style="cursor: pointer;">
                 <td>${pinnedIndicator}${update.component_name} ${hasDescription ? '<span class="desc-indicator" title="Show description">ℹ</span>' : ''}</td>
-                <td class="${statusClass}">
+                <td>
                     <span class="status-badge">${formatStatusText(update.new_status)}</span>
                 </td>
                 <td>${formattedDate}</td>
             </tr>
-            ${hasDescription ? `<tr class="description-row pinned-maintenance-desc" style="display: none">
+            ${hasDescription ? `<tr class="description-row pinned-desc-row" style="display: none">
                 <td colspan="3" style="text-align: left;">
                     <strong></strong> ${update.description}
                 </td>
             </tr>` : ''}
         `;
-    }
+    });
 
     // Render the rest of the updates
     tbodyHtml += otherUpdates.map(update => {
-        let statusClass = 'status-neutral';
-        if (update.new_status === 'operational') {
-            statusClass = 'status-positive';
-        } else if (['degraded_performance', 'partial_outage', 'major_outage'].includes(update.new_status)) {
-            statusClass = 'status-negative';
-        } else if (update.new_status === 'scheduled' || update.new_status === 'in_progress') {
-            // Older scheduled maintenances also get this class
-            statusClass = 'status-scheduled-maintenance';
-        }
-
         const date = new Date(update.changed_at);
         const formattedDate = date.toLocaleString(undefined, {
             year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -249,7 +255,7 @@ function renderUpdatesTable(updates, container) {
         return `
             <tr class="toggle-description${hasDescription ? ' has-description' : ''}" style="cursor: pointer;">
                 <td>${update.component_name} ${hasDescription ? '<span class="desc-indicator" title="Show description">ℹ</span>' : ''}</td>
-                <td class="${statusClass}">
+                <td>
                     <span class="status-badge">${formatStatusText(update.new_status)}</span>
                 </td>
                 <td>${formattedDate}</td>
@@ -292,7 +298,8 @@ function renderUpdatesTable(updates, container) {
     toggleRows.forEach(row => {
         row.addEventListener('click', (event) => {
             const descriptionRow = row.nextElementSibling;
-            if (descriptionRow && descriptionRow.classList.contains('description-row')) {
+            // Ensure the next sibling is indeed a description row
+            if (descriptionRow && (descriptionRow.classList.contains('description-row') || descriptionRow.classList.contains('pinned-desc-row'))) {
                 const isVisible = descriptionRow.style.display === '';
                 descriptionRow.style.display = isVisible ? 'none' : '';
             }
