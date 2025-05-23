@@ -395,16 +395,45 @@ function filterAssets() {
                     continue;
                 }
                 const nameCell = row.querySelector('td');
+                const statusCell = row.querySelectorAll('td')[1]; // Second td contains the status badge
                 let descRow = null;
-                if (updateRows[i + 1] && updateRows[i + 1].classList.contains('description-row')) {
+                if (updateRows[i + 1] && (updateRows[i + 1].classList.contains('description-row') || updateRows[i + 1].classList.contains('pinned-desc-row'))) {
                     descRow = updateRows[i + 1];
                 }
                 const descText = descRow && descRow.textContent ? descRow.textContent.toLowerCase() : '';
                 const name = nameCell ? nameCell.textContent.toLowerCase() : '';
+                const statusText = statusCell ? statusCell.textContent.toLowerCase() : '';
+
                 // Match search in either the main row (component name) or the description row
-                const matchesSearch = name.includes(searchTerm) || descText.includes(searchTerm);
-                row.style.display = matchesSearch ? '' : 'none';
-                if (matchesSearch) updatesVisible++;
+                const matchesSearch = name.includes(searchTerm) || descText.includes(searchTerm) || statusText.includes(searchTerm);
+                // Match stakeable filter if checked
+                const matchesStakeable = !stakeableFilter || (stakeableFilter && statusText.includes('stakeable'));
+                const matchesFusion = !fusionFilter || (fusionFilter && statusText.includes('fusion'));
+                const matchesNewAssets = !newAssetsFilter || (newAssetsFilter && statusText.includes('new'));
+                const matchesMaintenance = !maintenanceFilter || (maintenanceFilter && statusText.includes('maintenance'));
+                const matchesFullyIntegrated = !fullyIntegratedFilter || (fullyIntegratedFilter && statusText.includes('deposit') || statusText.includes('withdraw'));
+
+                const rowIsVisible = matchesSearch && matchesStakeable && matchesFusion && matchesNewAssets && matchesMaintenance && matchesFullyIntegrated;
+                row.style.display = rowIsVisible ? '' : 'none';
+                if (descRow) {
+                    // Also hide/show the description row if it was visible or matches criteria
+                    // If the main row is hidden, description must be hidden.
+                    // If main row is visible, description visibility depends on its previous state (if it was toggled open)
+                    // For simplicity here, we'll just match its display to the main row if the main row is now visible.
+                    // A more nuanced approach would be to preserve its toggled state if the main row remains visible.
+                    if (rowIsVisible) {
+                        // If main row is visible, description row's display depends on whether it was open
+                        // This part is tricky because we don't store the "is open" state separately from display style
+                        // For now, let's assume if the main row is visible, the description row should also be visible if it exists
+                        // and was previously not 'none'. However, the original toggle logic handles this.
+                        // The critical part is to hide it if the main row is hidden.
+                        // No change needed here if rowIsVisible, as toggle logic handles it.
+                    } else {
+                         descRow.style.display = 'none';
+                    }
+                }
+
+                if (rowIsVisible) updatesVisible++;
                 i += descRow ? 2 : 1;
             }
             // If no updates are visible, show a 'no results' row

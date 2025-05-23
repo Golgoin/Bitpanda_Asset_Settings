@@ -261,14 +261,14 @@ a:hover {
 .controls-section {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
-    margin-bottom: var(--section-spacing);
-    padding: 1.25rem;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding: 0.7rem;
     background-color: var(--bg-secondary);
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);    
     transition: var(--transition-base);
-    padding-top: 0.5rem; /* Abstand nach oben verringern */
+    border-left: 4px solid var(--primary-color);
 }
 
 .search-container {
@@ -734,7 +734,7 @@ summary:hover::before {
     border-radius: 12px;
     margin: 1.5rem 0;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    border-left: 4px solid var(--primary-color);
+    /* border-left: 4px solid var(--primary-color); */
 }
 
 .updates-section > summary {
