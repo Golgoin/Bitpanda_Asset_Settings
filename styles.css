@@ -376,17 +376,17 @@ a:hover {
 details {
     position: relative;
     background-color: var(--bg-secondary);
-    border-radius: 12px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     transition: var(--transition-base);
     margin-bottom: 10px;
-    border: none;
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--primary-color-light);
 }
 
 details:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-    transform: translateY(-1px);
+    border-left: 4px solid var(--primary-color);
 }
 
 summary {
@@ -734,7 +734,7 @@ summary:hover::before {
     border-radius: 12px;
     margin: 1.5rem 0;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    /* border-left: 4px solid var(--primary-color); */
+    border-left: 4px solid var(--primary-color-light);
 }
 
 .updates-section > summary {
