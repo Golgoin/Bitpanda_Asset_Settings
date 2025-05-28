@@ -450,6 +450,7 @@ details[open] summary::after {
     position: relative;
     overflow: hidden;
     box-shadow: 0 2px 5px rgba(0, 172, 193, 0.2);
+    font-variant-numeric: tabular-nums;
 }
 
 .asset-count::after {
@@ -459,7 +460,7 @@ details[open] summary::after {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(rgba(255, 255, 255, 0.15), transparent);
+    background: linear-gradient(rgba(255, 255, 255, 0.1), transparent);
     border-radius: inherit;
     pointer-events: none;
 }
@@ -569,27 +570,12 @@ td {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-/* Number formatting styles */
-.asset-count {
-    font-variant-numeric: tabular-nums;
-}
-
-/* Mobile optimizations */
-/* Responsive styles */
-
-
 /* Perfekte vertikale Ausrichtung */
 summary {
   display: flex;
   justify-content: flex-start;
   align-items: center;
   gap: 0;
-}
-
-.summary-content {
-  display: flex;
-  align-items: center;
-  height: 100%;
 }
 
 /* Enhanced open state styling */
@@ -666,28 +652,6 @@ details[open] > .table-container {
 
 [data-theme="dark"] .group-type {
     color: #00acc1; /* Gleiche Farbe wie die Badges */
-}
-
-/* Visual enhancements for modern design */
-details {
-    position: relative;
-}
-
-.asset-count {
-    position: relative;
-    overflow: hidden;
-}
-
-.asset-count::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(rgba(255, 255, 255, 0.1), transparent);
-    border-radius: inherit;
-    pointer-events: none;
 }
 
 summary::before {
@@ -780,7 +744,6 @@ summary:hover::before {
     z-index: 2;
     box-shadow: 0 2px 4px rgba(0,0,0,0.03);
     border-bottom: 2px solid var(--border-color);
-    padding: 0.75rem 0.5rem;
     font-weight: 600;
     color: var(--text-secondary);
     font-size: 0.95rem;

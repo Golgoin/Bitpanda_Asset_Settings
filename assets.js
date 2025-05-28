@@ -10,14 +10,18 @@ const MAINTENANCE_SYMBOLS = {
     null: '⚪'
 };
 
+const API_ENDPOINT_SETTINGS = 'https://bitpanda.visionresources.info/settings';
+const API_ENDPOINT_UPDATES = 'https://bitpanda.visionresources.info/updates';
+const API_ENDPOINT_NEW_ASSETS = 'https://api.bitpanda.com/v1/prices/assets/new';
+
 async function fetchAssetData() {
     try {
         console.log('Starting API requests...');
         // Fetch combined asset settings and updates data from both endpoints in parallel
         const [settingsResponse, updatesResponse, newAssetsResponse] = await Promise.all([
-            fetch('https://bitpanda.visionresources.info/settings'),
-            fetch('https://bitpanda.visionresources.info/updates'),
-            fetch('https://api.bitpanda.com/v1/prices/assets/new')
+            fetch(API_ENDPOINT_SETTINGS),
+            fetch(API_ENDPOINT_UPDATES),
+            fetch(API_ENDPOINT_NEW_ASSETS)
         ]);
         console.log('Settings endpoint response status:', settingsResponse.status);
         console.log('Updates endpoint response status:', updatesResponse.status);
@@ -58,18 +62,32 @@ async function fetchAssetData() {
 
 function processAssetData(settings, newAssets) {
     // Add a boolean field "New" to each asset: true if its pid is in newAssets, else false
-    let newPids = [];
+    let newPidsSet = new Set();
     if (newAssets && Array.isArray(newAssets.data)) {
-        newPids = newAssets.data.map(a => a.pid);
+        newPidsSet = new Set(newAssets.data.map(a => a.pid));
     }
     return settings.map(asset => ({
         ...asset,
-        New: newPids.includes(asset.pid)
+        New: newPidsSet.has(asset.pid)
     }));
 }
 
 function groupAssets(assets) {
     const grouped = {};
+    const groupNameMap = {
+        'coin': 'Coin/Token',
+        'token': 'Coin/Token',
+        'fiat_earn': 'Cash Plus',
+        'leveraged_token': 'Leverage',
+        'security_token': 'Security',
+        'metal': 'Metal',
+        'stock': 'Stock',
+        'etf': 'ETF',
+        'etc': 'ETC',
+        'index': 'Index'
+        // Add other specific mappings here if needed
+    };
+
     for (const asset of assets) {
         let typeName = (asset.asset_type_name || '').toLowerCase();
         // Normalize type names
@@ -79,28 +97,12 @@ function groupAssets(assets) {
             typeName = typeName.capitalize();
         }
 
-        let groupName = (asset.asset_group_name || '').toLowerCase();
-        // Normalize group names
-        if (['coin', 'token'].includes(groupName)) {
-            groupName = 'Coin/Token';
-        } else if (groupName === 'fiat_earn') {
-            groupName = 'Cash Plus';
-        } else if (groupName === 'leveraged_token') {
-            groupName = 'Leverage';
-        } else if (groupName === 'security_token') {
-            groupName = 'Security';
-        } else if (groupName === 'metal') {
-            groupName = 'Metal';
-        } else if (groupName === 'stock') {
-            groupName = 'Stock';
-        } else if (groupName === 'etf') {
-            groupName = 'ETF';
-        } else if (groupName === 'etc') {
-            groupName = 'ETC';
-        } else if (groupName === 'index') {
-            groupName = 'Index';
-        } else {
-            groupName = groupName.split('_').map(word => word.capitalize()).join(' ');
+        let rawGroupName = (asset.asset_group_name || '').toLowerCase();
+        let groupName = groupNameMap[rawGroupName];
+
+        if (!groupName) {
+            // Default normalization for unmapped group names
+            groupName = rawGroupName.split('_').map(word => word.capitalize()).join(' ');
         }
 
         const groupKey = `${typeName}-${groupName}`;
@@ -157,7 +159,19 @@ function renderAssetGroups(assets) {
                         </thead>
                         <tbody>
                             ${group.assets.map(asset => `
-                                <tr>
+                                <tr
+                                    data-name="${asset.name.toLowerCase()}"
+                                    data-symbol="${asset.symbol.toLowerCase()}"
+                                    data-buy-active="${asset.buy_active}"
+                                    data-sell-active="${asset.sell_active}"
+                                    data-withdraw-active="${asset.withdraw_active}"
+                                    data-deposit-active="${asset.deposit_active}"
+                                    data-limit-order="${asset.limit_order}"
+                                    data-stakeable="${asset.stakeable}"
+                                    data-fusion="${asset.fusion}"
+                                    data-maintenance="${asset.maintenance}"
+                                    data-new="${asset.New}"
+                                >
                                     <td>${asset.name}${asset.New ? ' 🆕' : ''}</td>
                                     <td>${asset.symbol}</td>
                                     <td>${STATUS_SYMBOLS[asset.buy_active]}</td>
@@ -185,14 +199,7 @@ function renderUpdatesTable(updates, container) {
 
     let itemsToPin = [];
 
-    // 1. Pin newest scheduled/in_progress maintenance
-    const scheduledMaintenances = updates.filter(u => u.new_status === 'scheduled' || u.new_status === 'in_progress');
-    if (scheduledMaintenances.length > 0) {
-        scheduledMaintenances.sort((a, b) => new Date(b.changed_at) - new Date(a.changed_at));
-        itemsToPin.push(scheduledMaintenances[0]); // Add the newest one
-    }
-
-    // 2. Pin newest "investigating" update for each component, if that's its latest status
+    // Calculate latest update for each component (needed for Rule 1 and Rule 2)
     const latestUpdatesByComponent = {};
     // Sort all updates by date (oldest to newest) to easily find the latest for each component
     const sortedUpdates = [...updates].sort((a, b) => new Date(a.changed_at) - new Date(b.changed_at));
@@ -201,6 +208,24 @@ function renderUpdatesTable(updates, container) {
         latestUpdatesByComponent[update.component_name] = update; // Overwrite with newer, so last one is latest
     }
 
+    // 1. Pin the most recent maintenance that is still 'scheduled' or 'in_progress'.
+    //    A maintenance is considered active if its *latest* update for that component
+    //    is 'scheduled' or 'in_progress'.
+    let newestActiveMaintenanceUpdate = null;
+    for (const componentName in latestUpdatesByComponent) {
+        const latestUpdateForComponent = latestUpdatesByComponent[componentName];
+        if (latestUpdateForComponent.new_status === 'scheduled' || latestUpdateForComponent.new_status === 'in_progress') {
+            if (!newestActiveMaintenanceUpdate || 
+                new Date(latestUpdateForComponent.changed_at) > new Date(newestActiveMaintenanceUpdate.changed_at)) {
+                newestActiveMaintenanceUpdate = latestUpdateForComponent;
+            }
+        }
+    }
+    if (newestActiveMaintenanceUpdate) {
+        itemsToPin.push(newestActiveMaintenanceUpdate);
+    }
+
+    // 2. Pin newest "investigating" update for each component, if that's its latest status
     for (const componentName in latestUpdatesByComponent) {
         const latestUpdate = latestUpdatesByComponent[componentName];
         if (latestUpdate.new_status === 'investigating') {
@@ -329,16 +354,16 @@ function filterAssets() {
         let visibleRows = 0;
 
         rows.forEach(row => {
-            if (!row.querySelector('td')) return; // Skip header rows
-            const cells = row.querySelectorAll('td');
-            const name = cells[0].textContent.toLowerCase();
-            const symbol = cells[1].textContent.toLowerCase();
-            const maintenance = cells[9].textContent === '🚧';
-            const withdraw = cells[4].textContent === '✅';
-            const deposit = cells[5].textContent === '✅';
-            const stakeable = cells[7].textContent === '✅';
-            const isNew = cells[0].innerHTML.includes('🆕');
-            const fusion = cells[8].textContent === '✅';
+            if (!row.querySelector('td')) return;
+
+            const name = row.dataset.name || '';
+            const symbol = row.dataset.symbol || '';
+            const maintenance = row.dataset.maintenance === 'true';
+            const withdraw = row.dataset.withdrawActive === 'true';
+            const deposit = row.dataset.depositActive === 'true';
+            const stakeable = row.dataset.stakeable === 'true';
+            const isNew = row.dataset.new === 'true';
+            const fusion = row.dataset.fusion === 'true';
 
             const matchesSearch = name.includes(searchTerm) || symbol.includes(searchTerm);
             const matchesMaintenance = !maintenanceFilter || maintenance;
