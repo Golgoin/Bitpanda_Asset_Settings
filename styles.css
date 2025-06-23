@@ -51,7 +51,7 @@
     /* Layout */
     --container-max-width: 750px;
     --section-spacing: 1rem;
-    --content-padding: 1.5rem;
+    --content-padding: 1rem;
     --border-radius-sm: 0.25rem;
     --border-radius: 0.5rem;
     --border-radius-lg: 1rem;
@@ -133,7 +133,7 @@ a:hover {
     width: 100%;
     max-width: var(--container-max-width);
     margin: 0 auto;
-    padding: 1.5rem var(--content-padding);
+    padding: 1rem var(--content-padding);
 }
 
 .app-header {
@@ -542,12 +542,12 @@ th, td {
 
 /* Set font size for asset groups table */
 .asset-groups th{
-    font-size: 0.95rem;
-    padding: 0.5rem 0.4rem;
+    font-size: 0.90rem;
+    padding: 0.4rem 0.3rem;
 }
 
 .asset-groups td {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     padding: 0.4rem 0.3rem;
     transition: var(--transition-base);
 }
@@ -746,15 +746,15 @@ summary:hover::before {
     border-bottom: 2px solid var(--border-color);
     font-weight: 600;
     color: var(--text-secondary);
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     transition: var(--transition-base);
-    padding: 0.5rem 0.4rem;
+    padding: 0.4rem 0.3rem;
 }
 
 .updates-section td {
     padding: 0.4rem 0.3rem;
     border-bottom: 1px solid var(--border-color);
-    font-size: 0.875rem;
+    font-size: 0.85rem;
     transition: var(--transition-base);
 }
 

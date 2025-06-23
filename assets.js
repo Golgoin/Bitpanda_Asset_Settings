@@ -1,17 +1,17 @@
 const STATUS_SYMBOLS = {
     true: '✅',
     false: '❌',
-    null: '⚪'
+    null: '❌'
 };
 
 const MAINTENANCE_SYMBOLS = {
     true: '🚧',
     false: '🟢',
-    null: '⚪'
+    null: '❌'
 };
 
-const API_ENDPOINT_SETTINGS = 'https://bitpanda.visionresources.info/settings';
-const API_ENDPOINT_UPDATES = 'https://bitpanda.visionresources.info/updates';
+const API_ENDPOINT_SETTINGS = 'https://webhook.visionresources.info/settings';
+const API_ENDPOINT_UPDATES = 'https://webhook.visionresources.info/updates';
 const API_ENDPOINT_NEW_ASSETS = 'https://api.bitpanda.com/v1/prices/assets/new';
 
 async function fetchAssetData() {
@@ -132,6 +132,20 @@ function renderAssetGroups(assets) {
             const assetCount = group.assets.length;
             const badgeClass = assetCount > 10 ? 'badge-large' : 'badge-small';
             
+            // Determine if the current group is Crypto
+            const isCryptoGroup = group.typeName === 'Crypto' && group.groupName === 'Coin/Token';
+
+            let cryptoHeaders = '';
+            if (isCryptoGroup) {
+                cryptoHeaders = `
+                                <th>⬆️</th>
+                                <th>⬇️</th>
+                                <th>Limit Order</th>
+                                <th>Stake</th>
+                                <th>Fusion</th>
+                `;
+            }
+
             details.innerHTML = `
                 <summary>
                     <span class="asset-count ${badgeClass}">${assetCount}</span>
@@ -149,16 +163,22 @@ function renderAssetGroups(assets) {
                                 <th>Symbol</th>
                                 <th>Buy</th>
                                 <th>Sell</th>
-                                <th>⬆️</th>
-                                <th>⬇️</th>
-                                <th>Limit Order</th>
-                                <th>Stake</th>
-                                <th>Fusion</th>
-                                <th>🚧</th>
+                                ${cryptoHeaders}
                             </tr>
                         </thead>
                         <tbody>
-                            ${group.assets.map(asset => `
+                            ${group.assets.map(asset => {
+                                let cryptoCells = '';
+                                if (isCryptoGroup) {
+                                    cryptoCells = `
+                                    <td>${STATUS_SYMBOLS[asset.withdraw_active]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.deposit_active]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.limit_order]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.stakeable]}</td>
+                                    <td>${STATUS_SYMBOLS[asset.fusion]}</td>
+                                    `;
+                                }
+                                return `
                                 <tr
                                     data-name="${asset.name.toLowerCase()}"
                                     data-symbol="${asset.symbol.toLowerCase()}"
@@ -171,19 +191,15 @@ function renderAssetGroups(assets) {
                                     data-fusion="${asset.fusion}"
                                     data-maintenance="${asset.maintenance}"
                                     data-new="${asset.New}"
+                                    ${asset.maintenance && maintenanceFilter ? 'style="background-color:rgba(255, 166, 0, 0.32);"' : ''}
                                 >
-                                    <td>${asset.name}${asset.New ? ' 🆕' : ''}</td>
+                                    <td>${asset.name}${asset.maintenance ? ' 🚧' : ''}${asset.New ? ' 🆕' : ''}</td>
                                     <td>${asset.symbol}</td>
                                     <td>${STATUS_SYMBOLS[asset.buy_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.sell_active]}</td>
-                                    <td>${STATUS_SYMBOLS[asset.withdraw_active]}</td>
-                                    <td>${STATUS_SYMBOLS[asset.deposit_active]}</td>
-                                    <td>${STATUS_SYMBOLS[asset.limit_order]}</td>
-                                    <td>${STATUS_SYMBOLS[asset.stakeable]}</td>
-                                    <td>${STATUS_SYMBOLS[asset.fusion]}</td>
-                                    <td>${MAINTENANCE_SYMBOLS[asset.maintenance]}</td>
+                                    ${cryptoCells}
                                 </tr>
-                            `).join('')}
+                            `}).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -332,18 +348,34 @@ function renderUpdatesTable(updates, container) {
     });
 }
 
+let cachedElements = null;
+
+function initializeElementCache() {
+    cachedElements = {
+        assetSearch: document.getElementById('assetSearch'),
+        maintenanceFilter: document.getElementById('maintenanceFilter'),
+        tradeOnlyFilter: document.getElementById('tradeOnlyFilter'),
+        fullyIntegratedFilter: document.getElementById('fullyIntegratedFilter'),
+        stakeableFilter: document.getElementById('stakeableFilter'),
+        newAssetsFilter: document.getElementById('newAssetsFilter'),
+        fusionFilter: document.getElementById('fusionFilter'),
+        assetGroups: document.getElementById('assetGroups'),
+        noResults: document.getElementById('noResults')
+    };
+}
+
 function filterAssets() {
-    const searchInput = document.getElementById('assetSearch');
-    const searchTerm = searchInput.value.toLowerCase();
-    const maintenanceFilter = document.getElementById('maintenanceFilter').checked;
-    const tradeOnlyFilter = document.getElementById('tradeOnlyFilter').checked;
-    const fullyIntegratedFilter = document.getElementById('fullyIntegratedFilter').checked;
-    const stakeableFilter = document.getElementById('stakeableFilter').checked;
-    const newAssetsFilter = document.getElementById('newAssetsFilter')?.checked;
-    const fusionFilter = document.getElementById('fusionFilter')?.checked;
-    // Specifically target details in the assetGroups container, excluding the updates section
-    const details = document.getElementById('assetGroups').querySelectorAll('details');
-    const noResults = document.getElementById('noResults');
+    if (!cachedElements) initializeElementCache();
+    
+    const searchTerm = cachedElements.assetSearch.value.toLowerCase();
+    const maintenanceFilter = cachedElements.maintenanceFilter.checked;
+    const tradeOnlyFilter = cachedElements.tradeOnlyFilter.checked;
+    const fullyIntegratedFilter = cachedElements.fullyIntegratedFilter.checked;
+    const stakeableFilter = cachedElements.stakeableFilter.checked;
+    const newAssetsFilter = cachedElements.newAssetsFilter?.checked;
+    const fusionFilter = cachedElements.fusionFilter?.checked;
+
+    const details = cachedElements.assetGroups.querySelectorAll('details');
     let totalVisible = 0;
 
     details.forEach(detail => {
@@ -352,6 +384,9 @@ function filterAssets() {
         
         const rows = tableBody.querySelectorAll('tr');
         let visibleRows = 0;
+        
+        // Batch DOM updates - collect all changes first
+        const rowUpdates = [];
 
         rows.forEach(row => {
             if (!row.querySelector('td')) return;
@@ -374,8 +409,15 @@ function filterAssets() {
             const matchesFusion = !fusionFilter || fusion;
 
             const isVisible = matchesSearch && matchesMaintenance && matchesTradeOnly && matchesFullyIntegrated && matchesStakeable && matchesNewAssets && matchesFusion;
-            row.style.display = isVisible ? '' : 'none';
+            
+            // Store the change instead of applying immediately
+            rowUpdates.push({ row, isVisible });
             if (isVisible) visibleRows++;
+        });
+
+        // Apply all row visibility changes at once
+        rowUpdates.forEach(({ row, isVisible }) => {
+            row.style.display = isVisible ? '' : 'none';
         });
 
         const summary = detail.querySelector('summary');
@@ -384,21 +426,21 @@ function filterAssets() {
             summary.setAttribute('data-original-text', originalText);
         }
 
+        // Batch summary updates
         if (visibleRows > 0) {
             detail.style.display = '';
-                const summary = detail.querySelector('summary');
-                const assetCountElement = summary.querySelector('.asset-count');
-                if (assetCountElement) {
-                    assetCountElement.textContent = visibleRows;
-                    assetCountElement.className = 'asset-count ' + (visibleRows > 10 ? 'badge-large' : 'badge-small');
-                }
-                totalVisible += visibleRows;
+            const assetCountElement = summary.querySelector('.asset-count');
+            if (assetCountElement) {
+                assetCountElement.textContent = visibleRows;
+                assetCountElement.className = 'asset-count ' + (visibleRows > 10 ? 'badge-large' : 'badge-small');
+            }
+            totalVisible += visibleRows;
         } else {
             detail.style.display = 'none';
         }
     });
 
-    noResults.style.display = totalVisible === 0 ? 'block' : 'none';
+    cachedElements.noResults.style.display = totalVisible === 0 ? 'block' : 'none';
 
     // --- Filter updates table by search box ---
     const updatesSection = document.querySelector('.updates-section');
@@ -410,7 +452,11 @@ function filterAssets() {
             // Remove any previous 'no results' row
             const tbody = updatesTable.querySelector('tbody');
             const prevNoResults = tbody.querySelector('.no-updates-results');
-            if (prevNoResults) tbody.removeChild(prevNoResults);
+            if (prevNoResults) prevNoResults.remove();
+            
+            // Collect all update row changes
+            const updateRowChanges = [];
+            
             // Updated logic: iterate through all rows, pairing main and description rows only if present
             for (let i = 0; i < updateRows.length; ) {
                 const row = updateRows[i];
@@ -432,35 +478,33 @@ function filterAssets() {
                 // Match search in either the main row (component name) or the description row
                 const matchesSearch = name.includes(searchTerm) || descText.includes(searchTerm) || statusText.includes(searchTerm);
                 // Match stakeable filter if checked
-                const matchesStakeable = !stakeableFilter || (stakeableFilter && statusText.includes('stakeable'));
-                const matchesFusion = !fusionFilter || (fusionFilter && statusText.includes('fusion'));
-                const matchesNewAssets = !newAssetsFilter || (newAssetsFilter && statusText.includes('new'));
-                const matchesMaintenance = !maintenanceFilter || (maintenanceFilter && statusText.includes('maintenance'));
-                const matchesFullyIntegrated = !fullyIntegratedFilter || (fullyIntegratedFilter && statusText.includes('deposit') || statusText.includes('withdraw'));
+                const matchesStakeable = !stakeableFilter || statusText.includes('stakeable');
+                const matchesFusion = !fusionFilter || statusText.includes('fusion');
+                const matchesNewAssets = !newAssetsFilter || statusText.includes('new');
+                const matchesMaintenance = !maintenanceFilter || statusText.includes('maintenance');
+                const matchesFullyIntegrated = !fullyIntegratedFilter || statusText.includes('deposit') || statusText.includes('withdraw');
 
                 const rowIsVisible = matchesSearch && matchesStakeable && matchesFusion && matchesNewAssets && matchesMaintenance && matchesFullyIntegrated;
-                row.style.display = rowIsVisible ? '' : 'none';
-                if (descRow) {
-                    // Also hide/show the description row if it was visible or matches criteria
-                    // If the main row is hidden, description must be hidden.
-                    // If main row is visible, description visibility depends on its previous state (if it was toggled open)
-                    // For simplicity here, we'll just match its display to the main row if the main row is now visible.
-                    // A more nuanced approach would be to preserve its toggled state if the main row remains visible.
-                    if (rowIsVisible) {
-                        // If main row is visible, description row's display depends on whether it was open
-                        // This part is tricky because we don't store the "is open" state separately from display style
-                        // For now, let's assume if the main row is visible, the description row should also be visible if it exists
-                        // and was previously not 'none'. However, the original toggle logic handles this.
-                        // The critical part is to hide it if the main row is hidden.
-                        // No change needed here if rowIsVisible, as toggle logic handles it.
-                    } else {
-                         descRow.style.display = 'none';
-                    }
-                }
-
+                
+                // Store changes instead of applying immediately
+                updateRowChanges.push({
+                    row,
+                    descRow,
+                    isVisible: rowIsVisible
+                });
+                
                 if (rowIsVisible) updatesVisible++;
                 i += descRow ? 2 : 1;
             }
+
+            // Apply all update row changes at once
+            updateRowChanges.forEach(({ row, descRow, isVisible }) => {
+                row.style.display = isVisible ? '' : 'none';
+                if (descRow && !isVisible) {
+                    descRow.style.display = 'none';
+                }
+            });
+
             // If no updates are visible, show a 'no results' row
             if (updatesVisible === 0) {
                 const noRow = document.createElement('tr');
@@ -500,6 +544,9 @@ function formatStatusText(status) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize element cache
+    initializeElementCache();
+    
     // Initialize theme
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -510,22 +557,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const themeIcon = button.querySelector('.theme-icon');
     themeIcon.innerHTML = theme === 'dark' ? '☀' : '🌑';
 
-    // Set up event listeners
-    const searchInput = document.getElementById('assetSearch');
-    const maintenanceFilter = document.getElementById('maintenanceFilter');
-    const tradeOnlyFilter = document.getElementById('tradeOnlyFilter');
-    const fullyIntegratedFilter = document.getElementById('fullyIntegratedFilter');
-    const stakeableFilter = document.getElementById('stakeableFilter');
-    const newAssetsFilter = document.getElementById('newAssetsFilter');
-    const fusionFilter = document.getElementById('fusionFilter');
-
-    searchInput.addEventListener('input', filterAssets);
-    maintenanceFilter.addEventListener('change', filterAssets);
-    tradeOnlyFilter.addEventListener('change', filterAssets);
-    fullyIntegratedFilter.addEventListener('change', filterAssets);
-    stakeableFilter.addEventListener('change', filterAssets);
-    newAssetsFilter.addEventListener('change', filterAssets);
-    fusionFilter.addEventListener('change', filterAssets);
+    // Set up event listeners using cached elements
+    cachedElements.assetSearch.addEventListener('input', filterAssets);
+    cachedElements.maintenanceFilter.addEventListener('change', filterAssets);
+    cachedElements.tradeOnlyFilter.addEventListener('change', filterAssets);
+    cachedElements.fullyIntegratedFilter.addEventListener('change', filterAssets);
+    cachedElements.stakeableFilter.addEventListener('change', filterAssets);
+    cachedElements.newAssetsFilter.addEventListener('change', filterAssets);
+    cachedElements.fusionFilter.addEventListener('change', filterAssets);
 
     // Fetch initial data
     fetchAssetData();
