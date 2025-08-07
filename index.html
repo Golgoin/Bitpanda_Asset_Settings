@@ -1,14 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Bitpanda Broker Asset Settings</title>
+    <title>Bitpanda Broker Asset Settings & Updates | Crypto Asset Filters & Maintenance</title>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="View all asset settings available on the Bitpanda Broker platform">
-    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <meta name="description" content="Explore all Bitpanda Broker crypto asset settings, updates, maintenance status, and advanced filters. Search by asset name or symbol, view trade-only, stakeable, fusion, and new assets. Stay updated on Bitpanda platform changes.">
+    <meta name="keywords" content="Bitpanda, crypto assets, asset settings, asset updates, maintenance, trade only, stakeable, fusion assets, new assets, limit order, send receive, broker platform, asset filters, cryptocurrency, digital assets, asset search, platform updates">
+    
+    <link rel="stylesheet" href="styles.css?v=1.0.2"/>
+
     <link rel="icon" type="image/png" href="favicon.png">
-    <script defer data-domain="visionresources.info" src="https://plausible.visionresources.info/js/script.js"></script>
+
+    <script defer data-domain="visionresources.info" src="https://plausible.visionresources.info/js/script.js"></script>    
+    <script defer src="all.js"></script>
     <script src="assets.js"></script>
+    <script src="footer.js"></script>
+    <script src="coffee.js"></script>
 </head>
 <body>
     <div class="app-container">
@@ -31,6 +39,9 @@
                             placeholder="Search by asset name or symbol..." 
                             autocomplete="off">
                         <span class="search-icon">🔍</span>
+                        <span id="shareSearch" class="share-icon" aria-label="Share search" onclick="shareSearchUrl()">
+                            <i class="fa-solid fa-share"></i>
+                        </span>
                     </div>
                 </div>
                 <div class="filter-container">
@@ -64,16 +75,24 @@
                         <span class="custom-checkbox"></span>
                         <span>Fusion</span>
                     </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="limitOrderFilter">
+                        <span class="custom-checkbox"></span>
+                        <span>Limit Order</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" id="marginFilter">
+                        <span class="custom-checkbox"></span>
+                        <span>Margin</span>
+                    </label>
                 </div>
             </section>
             <section id="updatesSection" class="updates-container"></section>            
             <div id="noResults" class="no-results">No matching assets found</div>
             <section id="assetGroups" class="asset-groups"></section>
+        <footer id="dynamic-footer"></footer>
         </main>
         
-        <footer class="footer">
-            <p>Created by <a href="https://x.com/Golgoin" target="_blank">@Golgoin</a></p>
-        </footer>
     </div>
 </body>
 </html>

@@ -5,6 +5,11 @@
     padding: 0;
 }
 
+/* Performance optimization for theme switching */
+.no-transition * {
+    transition: none !important;
+}
+
 /* CSS Variables for Theming */
 :root {
     /* Colors - Refined Modern Palette */
@@ -55,7 +60,7 @@
     --border-radius-sm: 0.25rem;
     --border-radius: 0.5rem;
     --border-radius-lg: 1rem;
-    --transition-base: all 0.3s ease;
+    --transition-base: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     
     /* Status Indicators */
     --status-true: #4caf50;
@@ -95,7 +100,7 @@ body {
     line-height: var(--line-height-base);
     background-color: var(--bg-color);
     color: var(--text-primary);
-    transition: var(--transition-base);
+    transition: background-color 0.2s ease, color 0.2s ease;
     overflow-x: hidden;
 }
 
@@ -161,10 +166,11 @@ a:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 0.15s ease, transform 0.15s ease;
     overflow: hidden;
     box-shadow: none;
     outline: none;
+    will-change: background-color, transform;
 }
 
 #theme-toggle:hover {
@@ -183,7 +189,7 @@ a:hover {
     align-items: center;
     justify-content: center;
     transform: scale(1);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.15s ease;
 }
 
 /* Sun Icon - einfacher und minimalistischer */
@@ -279,10 +285,11 @@ a:hover {
     position: relative;
     display: flex;
     align-items: center;
-    width: 100%;
 }
 
 .search-box {
+    flex: 1;
+    padding-right: 40px; /* Add space for the share icon */
     width: 100%;
     padding: 0.75rem 1rem 0.75rem 2.5rem;
     font-size: var(--font-size-base);
@@ -290,7 +297,7 @@ a:hover {
     border-radius: var(--border-radius);
     background-color: var(--input-bg);
     color: var(--text-primary);
-    transition: var(--transition-base);
+    transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .search-box:focus {
@@ -301,9 +308,25 @@ a:hover {
 
 .search-icon {
     position: absolute;
-    left: 0.75rem;
-    color: var(--text-muted);
+    left: 10px;
     pointer-events: none;
+    color: var(--text-muted);
+}
+
+.share-icon {
+    position: absolute;
+    right: 10px;
+    cursor: pointer;
+    color: #666;
+    transition: color 0.3s;
+}
+
+.share-icon:hover {
+    color: #000;
+}
+
+[data-theme="dark"] .share-icon:hover {
+    color: #bbb;
 }
 
 .filter-container {
@@ -934,6 +957,61 @@ summary:hover::before {
     opacity: 1;
     text-shadow: 0 0 2px #00b5ad44;
 }
+
+/* Recent Changes Row Styling */
+.asset-groups tbody tr:hover {
+    background-color: var(--hover-bg);
+}
+
 [data-theme="dark"] .desc-indicator {
     color: #4fd2c2;
+}
+
+/* Popup Message Styles */
+.popup-message {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    opacity: 1;
+    transition: opacity 0.5s ease;
+}
+
+footer p{
+	padding: 10px;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 0px;
+	text-align: center;
+    border-left: 4px solid var(--primary-color-light); 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);   
+    margin-top: 0.5rem;
+}
+footer p:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    border-left: 4px solid var(--primary-color);
+}
+
+footer p a {
+	color: white;
+	text-decoration: none;
+	font-weight: 700;
+	padding: 3px 6px;
+	border-radius: 8px;
+	transition: all 0.3s ease;
+	background: var(--primary-color-light);
+}
+
+footer p a:hover {
+	background: var(--primary-color);
+	color: white;
+	text-decoration: none;
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(96, 165, 250, 0.4);
 }

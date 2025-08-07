@@ -1,0 +1,160 @@
+
+		.coffee-overlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0, 0, 0, 0.5);
+			backdrop-filter: blur(4px);
+			z-index: 1000;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+
+		.coffee-popup {
+			background: #181818;
+			color: #fff;
+			border-radius: 16px;
+			box-shadow: 0 4px 32px rgba(0, 0, 0, 0.3);
+			padding: 1em;
+			max-width: 350px;
+			width: 90%;
+			text-align: center;
+			position: relative;
+		}
+
+		.coffee-close {
+			position: absolute;
+			top: 12px;
+			right: 16px;
+			background: none;
+			border: none;
+			color: #fff;
+			font-size: 1.5em;
+			cursor: pointer;
+		}
+
+		.coffee-address-box {
+			background: #232323;
+			border-radius: 8px;
+			padding: 0.7em 0.5em;
+			margin: 1em 0 0.5em 0;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			font-family: monospace;
+			font-size: 1em;
+			word-break: break-all;
+		}
+
+		.copy-address-btn {
+			background: none;
+			border: none;
+			color: #fff;
+			font-size: 1.2em;
+			cursor: pointer;
+			margin-left: 0.5em;
+			transition: color 0.2s;
+		}
+
+		.copy-address-btn:hover {
+			color: #ffd700;
+		}
+
+		.copy-success {
+			color: #7fff7f;
+			font-size: 0.95em;
+			margin-bottom: 0.5em;
+			transition: opacity 0.2s;
+		}
+
+		.coffee-buy-btn {
+			display: inline-block;
+			margin-top: 1em;
+			border-radius: 8px;
+			overflow: hidden;
+			box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+			transition: box-shadow 0.2s;
+		}
+
+		.coffee-buy-btn:hover {
+			box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+		}
+        
+.floating-coffee-btn {
+	position: fixed;
+	bottom: 20px;
+	right: 20px;
+	width: auto;
+	height: 50px;
+	background: rgba(32, 32, 32, 0.35);
+	backdrop-filter: blur(8px);
+	-webkit-backdrop-filter: blur(8px);
+	border-radius: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+	transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+	text-decoration: none;
+	border: 1px solid rgba(64, 64, 64, 0.25);
+	overflow: hidden;
+	padding: 8px 8px;
+	box-shadow: 0 0 8px 2px rgba(255,255,255,0.18), 0 4px 20px rgba(59, 130, 246, 0.1);
+}
+
+.floating-coffee-btn:hover {
+	transform: translateY(-3px) scale(1.05);
+	background: transparent;
+}
+
+.floating-coffee-btn img {
+	height: 42px;
+	width: auto;
+	object-fit: contain;
+	transition: transform 0.3s ease;
+}
+
+.floating-coffee-btn:hover img {
+	transform: scale(1.1);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 768px) {
+	.floating-coffee-btn {
+		height: 42px;
+		bottom: 15px;
+		right: 15px;
+		border-width: 2px;
+		padding: 6px 12px;
+		border-radius: 21px;
+	}
+	
+	.floating-coffee-btn img {
+		height: 36px;
+	}
+	
+	.floating-coffee-btn::before {
+		border-radius: 21px;
+	}
+}
+
+@media (max-width: 480px) {
+	.floating-coffee-btn {
+		height: 38px;
+		bottom: 12px;
+		right: 12px;
+		padding: 5px 10px;
+		border-radius: 19px;
+	}
+	
+	.floating-coffee-btn img {
+		height: 30px;
+	}
+	
+	.floating-coffee-btn::before {
+		border-radius: 19px;
+	}
+}

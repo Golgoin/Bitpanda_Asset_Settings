@@ -7,12 +7,14 @@ const STATUS_SYMBOLS = {
 const MAINTENANCE_SYMBOLS = {
     true: '🚧',
     false: '🟢',
-    null: '❌'
+    null: '⚪'
 };
 
-const API_ENDPOINT_SETTINGS = 'https://webhook.visionresources.info/settings';
-const API_ENDPOINT_UPDATES = 'https://webhook.visionresources.info/updates';
+const API_ENDPOINT_SETTINGS = 'https://api.visionresources.info/settings';
+const API_ENDPOINT_UPDATES = 'https://api.visionresources.info/updates';
 const API_ENDPOINT_NEW_ASSETS = 'https://api.bitpanda.com/v1/prices/assets/new';
+
+let isDataLoaded = false; // Flag to track data loading
 
 async function fetchAssetData() {
     try {
@@ -41,18 +43,83 @@ async function fetchAssetData() {
         const updates = await updatesResponse.json();
         const newAssets = await newAssetsResponse.json();
 
-        // Process response
-        console.log('Full settings response structure:', JSON.stringify(settings).slice(0, 200) + '...');
         console.log('Updates data:', updates);
         
         const combinedAssets = processAssetData(settings, newAssets);
-        console.log('Combined assets:', combinedAssets);
+        console.log('Settings data:', combinedAssets);
         const container = document.getElementById('assetGroups');
         container.innerHTML = '';
         const updatesContainer = document.getElementById('updatesSection');
         
         renderUpdatesTable(updates, updatesContainer);
         renderAssetGroups(combinedAssets);
+
+        isDataLoaded = true; // Mark data as loaded
+
+        // Trigger filtering if URL parameters exist
+        const urlParams = new URLSearchParams(window.location.search);
+        let hasParams = false;
+        
+        // Set search query if exists
+        const searchQuery = urlParams.get('search');
+        if (searchQuery) {
+            cachedElements.assetSearch.value = searchQuery;
+            hasParams = true;
+        }
+        
+        // Set filter checkboxes if exists
+        const maintenanceParam = urlParams.get('maintenance');
+        if (maintenanceParam === 'true') {
+            cachedElements.maintenanceFilter.checked = true;
+            hasParams = true;
+        }
+        
+        const tradeOnlyParam = urlParams.get('tradeOnly');
+        if (tradeOnlyParam === 'true') {
+            cachedElements.tradeOnlyFilter.checked = true;
+            hasParams = true;
+        }
+        
+        const fullyIntegratedParam = urlParams.get('fullyIntegrated');
+        if (fullyIntegratedParam === 'true') {
+            cachedElements.fullyIntegratedFilter.checked = true;
+            hasParams = true;
+        }
+        
+        const stakeableParam = urlParams.get('stakeable');
+        if (stakeableParam === 'true') {
+            cachedElements.stakeableFilter.checked = true;
+            hasParams = true;
+        }
+        
+        const newAssetsParam = urlParams.get('newAssets');
+        if (newAssetsParam === 'true') {
+            cachedElements.newAssetsFilter.checked = true;
+            hasParams = true;
+        }
+        
+        const fusionParam = urlParams.get('fusion');
+        if (fusionParam === 'true') {
+            cachedElements.fusionFilter.checked = true;
+            hasParams = true;
+        }
+        
+        const limitOrderParam = urlParams.get('limitOrder');
+        if (limitOrderParam === 'true') {
+            cachedElements.limitOrderFilter.checked = true;
+            hasParams = true;
+        }
+
+        const marginParam = urlParams.get('margin');
+        if (marginParam === 'true') {
+            cachedElements.marginFilter.checked = true;
+            hasParams = true;
+        }
+        
+        // Apply filters if any parameters were found
+        if (hasParams) {
+            filterAssets();
+        }
 
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -138,11 +205,12 @@ function renderAssetGroups(assets) {
             let cryptoHeaders = '';
             if (isCryptoGroup) {
                 cryptoHeaders = `
-                                <th>⬆️</th>
-                                <th>⬇️</th>
-                                <th>Limit Order</th>
-                                <th>Stake</th>
-                                <th>Fusion</th>
+                                <th title="Withdraw Active" aria-label="Withdraw Active">⬆️</th>
+                                <th title="Deposit Active" aria-label="Deposit Active">⬇️</th>
+                                <th title="Limit Order" aria-label="Limit Order">Limit Order</th>
+                                <th title="Stakeable" aria-label="Stakeable">Stake</th>
+                                <th title="Fusion" aria-label="Fusion">Fusion</th>
+                                <!-- <th title="Margin" aria-label="Margin">Margin</th> -->
                 `;
             }
 
@@ -176,10 +244,11 @@ function renderAssetGroups(assets) {
                                     <td>${STATUS_SYMBOLS[asset.limit_order]}</td>
                                     <td>${STATUS_SYMBOLS[asset.stakeable]}</td>
                                     <td>${STATUS_SYMBOLS[asset.fusion]}</td>
+                                    <!-- <td>${asset.margin >0 ? `<b>x${asset.margin}</b>` : '❌'}</td> -->
                                     `;
                                 }
                                 return `
-                                <tr
+                                <tr class="asset-row"
                                     data-name="${asset.name.toLowerCase()}"
                                     data-symbol="${asset.symbol.toLowerCase()}"
                                     data-buy-active="${asset.buy_active}"
@@ -191,9 +260,10 @@ function renderAssetGroups(assets) {
                                     data-fusion="${asset.fusion}"
                                     data-maintenance="${asset.maintenance}"
                                     data-new="${asset.New}"
-                                    ${asset.maintenance && maintenanceFilter ? 'style="background-color:rgba(255, 166, 0, 0.32);"' : ''}
+                                    data-margin="${asset.margin}"
+                                    ${asset.maintenance && maintenanceFilter ? 'style="background-color:rgba(255, 166, 0, 0.23);"' : ''}
                                 >
-                                    <td>${asset.name}${asset.maintenance ? ' 🚧' : ''}${asset.New ? ' 🆕' : ''}</td>
+                                    <td>${asset.name}${asset.margin && asset.margin > 0 ? ` <b style=\"color:#e67e22\">x${asset.margin}</b>` : ''}${asset.maintenance ? ' 🚧' : ''}${asset.New ? ' 🆕' : ''}</td>
                                     <td>${asset.symbol}</td>
                                     <td>${STATUS_SYMBOLS[asset.buy_active]}</td>
                                     <td>${STATUS_SYMBOLS[asset.sell_active]}</td>
@@ -241,10 +311,10 @@ function renderUpdatesTable(updates, container) {
         itemsToPin.push(newestActiveMaintenanceUpdate);
     }
 
-    // 2. Pin newest "investigating" update for each component, if that's its latest status
+    // 2. Pin newest "investigating" or "monitoring" update for each component, if that's its latest status
     for (const componentName in latestUpdatesByComponent) {
         const latestUpdate = latestUpdatesByComponent[componentName];
-        if (latestUpdate.new_status === 'investigating') {
+        if (latestUpdate.new_status === 'investigating' || latestUpdate.new_status === 'monitoring') {
             // Add to itemsToPin if not already there (e.g. from scheduled maintenance rule)
             if (!itemsToPin.includes(latestUpdate)) {
                 itemsToPin.push(latestUpdate);
@@ -359,6 +429,8 @@ function initializeElementCache() {
         stakeableFilter: document.getElementById('stakeableFilter'),
         newAssetsFilter: document.getElementById('newAssetsFilter'),
         fusionFilter: document.getElementById('fusionFilter'),
+        limitOrderFilter: document.getElementById('limitOrderFilter'),
+        marginFilter: document.getElementById('marginFilter'),
         assetGroups: document.getElementById('assetGroups'),
         noResults: document.getElementById('noResults')
     };
@@ -374,6 +446,8 @@ function filterAssets() {
     const stakeableFilter = cachedElements.stakeableFilter.checked;
     const newAssetsFilter = cachedElements.newAssetsFilter?.checked;
     const fusionFilter = cachedElements.fusionFilter?.checked;
+    const limitOrderFilter = cachedElements.limitOrderFilter?.checked;
+    const marginFilter = cachedElements.marginFilter?.checked;
 
     const details = cachedElements.assetGroups.querySelectorAll('details');
     let totalVisible = 0;
@@ -399,6 +473,7 @@ function filterAssets() {
             const stakeable = row.dataset.stakeable === 'true';
             const isNew = row.dataset.new === 'true';
             const fusion = row.dataset.fusion === 'true';
+            const limitOrder = row.dataset.limitOrder === 'true';
 
             const matchesSearch = name.includes(searchTerm) || symbol.includes(searchTerm);
             const matchesMaintenance = !maintenanceFilter || maintenance;
@@ -407,9 +482,11 @@ function filterAssets() {
             const matchesStakeable = !stakeableFilter || stakeable;
             const matchesNewAssets = !newAssetsFilter || isNew;
             const matchesFusion = !fusionFilter || fusion;
+            const matchesLimitOrder = !limitOrderFilter || limitOrder;
+            const matchesMargin = !marginFilter || marginFilter && row.dataset.margin && parseFloat(row.dataset.margin) > 0;
 
-            const isVisible = matchesSearch && matchesMaintenance && matchesTradeOnly && matchesFullyIntegrated && matchesStakeable && matchesNewAssets && matchesFusion;
-            
+            const isVisible = matchesSearch && matchesMaintenance && matchesTradeOnly && matchesFullyIntegrated && matchesStakeable && matchesNewAssets && matchesFusion && matchesLimitOrder && matchesMargin;
+
             // Store the change instead of applying immediately
             rowUpdates.push({ row, isVisible });
             if (isVisible) visibleRows++;
@@ -483,9 +560,11 @@ function filterAssets() {
                 const matchesNewAssets = !newAssetsFilter || statusText.includes('new');
                 const matchesMaintenance = !maintenanceFilter || statusText.includes('maintenance');
                 const matchesFullyIntegrated = !fullyIntegratedFilter || statusText.includes('deposit') || statusText.includes('withdraw');
+                const matchesLimitOrder = !limitOrderFilter || statusText.includes('limit order');
+                const matchesMargin = !marginFilter || statusText.includes('margin');
 
-                const rowIsVisible = matchesSearch && matchesStakeable && matchesFusion && matchesNewAssets && matchesMaintenance && matchesFullyIntegrated;
-                
+                const rowIsVisible = matchesSearch && matchesStakeable && matchesFusion && matchesNewAssets && matchesMaintenance && matchesFullyIntegrated && matchesLimitOrder && matchesMargin;
+
                 // Store changes instead of applying immediately
                 updateRowChanges.push({
                     row,
@@ -520,16 +599,99 @@ function filterAssets() {
     }
 }
 
+function shareSearchUrl() {
+    if (!cachedElements) initializeElementCache();
+
+    const currentUrl = new URL(window.location.href);
+    
+    // Clear existing search params
+    currentUrl.search = '';
+    
+    // Add search query if not empty
+    const searchQuery = cachedElements.assetSearch.value;
+    if (searchQuery.trim()) {
+        currentUrl.searchParams.set('search', searchQuery);
+    }
+    
+    // Add filter parameters if checked
+    if (cachedElements.maintenanceFilter.checked) {
+        currentUrl.searchParams.set('maintenance', 'true');
+    }
+    
+    if (cachedElements.tradeOnlyFilter.checked) {
+        currentUrl.searchParams.set('tradeOnly', 'true');
+    }
+    
+    if (cachedElements.fullyIntegratedFilter.checked) {
+        currentUrl.searchParams.set('fullyIntegrated', 'true');
+    }
+    
+    if (cachedElements.stakeableFilter.checked) {
+        currentUrl.searchParams.set('stakeable', 'true');
+    }
+    
+    if (cachedElements.newAssetsFilter.checked) {
+        currentUrl.searchParams.set('newAssets', 'true');
+    }
+    
+    if (cachedElements.fusionFilter.checked) {
+        currentUrl.searchParams.set('fusion', 'true');
+    }
+    
+    if (cachedElements.limitOrderFilter.checked) {
+        currentUrl.searchParams.set('limitOrder', 'true');
+    }
+
+    if (cachedElements.marginFilter.checked) {
+        currentUrl.searchParams.set('margin', 'true');
+    }
+
+    navigator.clipboard.writeText(currentUrl.toString())
+        .then(() => {
+            showTemporaryPopup(currentUrl.toString()+ ' copied to clipboard!');
+        })
+        .catch(err => {
+            console.error('Failed to copy URL:', err);
+            showTemporaryPopup('Failed to copy URL. Please try again.', true);
+        });
+}
+
+function showTemporaryPopup(message, isError = false) {
+    const popup = document.createElement('div');
+    popup.className = `popup-message ${isError ? 'error' : 'success'}`;
+    popup.textContent = message;
+    document.body.appendChild(popup);
+
+    setTimeout(() => {
+        popup.style.opacity = '0';
+        setTimeout(() => popup.remove(), 500); // Remove after fade-out
+    }, 2000); // Show for 2 seconds
+}
+
 function toggleTheme() {
     const html = document.documentElement;
     const currentTheme = html.getAttribute('data-theme');
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    
+    // Temporarily disable transitions for faster theme switching
+    document.body.classList.add('no-transition');
+    
+    // Apply theme change
     html.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
-
-    const button = document.getElementById('theme-toggle');
-    const themeIcon = button.querySelector('.theme-icon');
-    themeIcon.innerHTML = newTheme === 'dark' ? '☀' : '🌑';
+    
+    // Update icon directly
+    const themeIcon = document.querySelector('.theme-icon');
+    if (themeIcon) {
+        themeIcon.textContent = newTheme === 'dark' ? '☀' : '🌑';
+    }
+    
+    // Re-enable transitions after a short delay
+    requestAnimationFrame(() => {
+        setTimeout(() => {
+            document.body.classList.remove('no-transition');
+        }, 50);
+    });
 }
 
 // Add String.prototype.capitalize() if not exists
@@ -546,7 +708,7 @@ function formatStatusText(status) {
 document.addEventListener('DOMContentLoaded', () => {
     // Initialize element cache
     initializeElementCache();
-    
+
     // Initialize theme
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -565,6 +727,8 @@ document.addEventListener('DOMContentLoaded', () => {
     cachedElements.stakeableFilter.addEventListener('change', filterAssets);
     cachedElements.newAssetsFilter.addEventListener('change', filterAssets);
     cachedElements.fusionFilter.addEventListener('change', filterAssets);
+    cachedElements.limitOrderFilter.addEventListener('change', filterAssets);
+    cachedElements.marginFilter.addEventListener('change', filterAssets);
 
     // Fetch initial data
     fetchAssetData();
